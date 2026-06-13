@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#f7f6f2"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Training"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon.png"/>
+<title>Mein Krafttraining</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#f7f6f2;color:#1a1a1a;font-family:'Georgia','Times New Roman',serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:#d0cfc8;border-radius:2px}
+#app{max-width:680px;margin:0 auto;min-height:100dvh}
+
+/* TOP BAR */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(247,246,242,.96);backdrop-filter:blur(12px);border-bottom:1px solid #e8e6e0;padding:12px 16px;display:flex;align-items:center;gap:10px}
+.back-btn{background:none;border:none;font-size:20px;color:#888;padding:2px 6px 2px 0;line-height:1;flex-shrink:0}
+.back-btn:active{color:#333}
+.topbar-titles{flex:1;min-width:0}
+.topbar-sub{font-size:10px;letter-spacing:.25em;color:#999;font-family:'Courier New',monospace;text-transform:uppercase}
+.topbar-title{font-size:15px;color:#1a1a1a;margin-top:1px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.phase-dot{width:7px;height:7px;border-radius:50%}
+.phase-label{font-size:11px;color:#999;font-family:'Courier New',monospace}
+
+/* BOTTOM NAV */
+.bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:680px;background:rgba(247,246,242,.96);backdrop-filter:blur(14px);border-top:1px solid #e8e6e0;display:flex;justify-content:space-around;padding:10px 0;padding-bottom:max(12px,env(safe-area-inset-bottom));z-index:50}
+.nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;flex:1}
+.nav-icon{font-size:19px}
+.nav-lbl{font-size:8px;font-family:'Courier New',monospace;letter-spacing:.05em;text-transform:uppercase}
+
+/* CONTENT */
+.content{padding:16px 16px 100px}
+
+/* HERO */
+.hero{border-radius:14px;padding:20px 18px;margin-bottom:18px;border:1px solid transparent}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-box{background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:14px 10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stat-val{font-size:20px;font-family:'Courier New',monospace;margin:4px 0 2px}
+.stat-lbl{font-size:9px;color:#999;letter-spacing:.15em;text-transform:uppercase}
+
+/* SECTION LABEL */
+.slabel{font-size:10px;letter-spacing:.2em;color:#aaa;text-transform:uppercase;font-family:'Courier New',monospace;margin-bottom:10px}
+
+/* PHASE GRID */
+.phase-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.phase-btn{border-radius:10px;padding:14px 16px;text-align:left;cursor:pointer;transition:all .15s;width:100%;background:#fff;border:1px solid #e8e6e0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+
+/* SESSION BTN */
+.sess-btn{width:100%;margin-bottom:8px;background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;text-align:left;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+
+/* EXERCISE CARD */
+.excard{background:#fff;border:1px solid #e8e6e0;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.excard-body{padding:14px 16px}
+.ex-stats{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.ex-stat{background:#f7f6f2;border:1px solid #e8e6e0;border-radius:8px;padding:8px 14px;text-align:center;min-width:52px}
+.ex-stat-val{font-size:17px;font-family:'Courier New',monospace}
+.ex-stat-lbl{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.15em}
+.last-box{background:#f0faf0;border:1px solid #c8e6c8;border-radius:8px;padding:8px 12px;text-align:center}
+.last-val{font-size:13px;font-family:'Courier New',monospace;color:#2e7d32}
+.last-lbl{font-size:9px;color:#66a166;text-transform:uppercase;letter-spacing:.1em}
+
+/* HISTORY STRIP */
+.hist-strip{border-top:1px solid #f0ede8;padding:8px 16px;display:flex;gap:6px;overflow-x:auto;background:#fafaf8;align-items:center}
+.hist-chip{font-size:11px;font-family:'Courier New',monospace;color:#888;background:#eeede8;border-radius:4px;padding:3px 8px;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.hdel{background:none;border:none;color:#ccc;font-size:12px;padding:0 2px;cursor:pointer;line-height:1}
+.hdel:hover{color:#e53935}
+
+/* EDIT/LOG */
+.edit-panel{background:#f7f6f2;border:1px solid #e8e6e0;border-radius:8px;padding:14px;margin:10px 0}
+.log-panel{background:#f0faf0;border:1px solid #c8e6c8;border-radius:8px;padding:14px;margin:10px 0}
+.panel-lbl{font-size:10px;font-family:'Courier New',monospace;letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px}
+.num-row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end}
+.num-group label{display:block;font-size:10px;font-family:'Courier New',monospace;color:#aaa;letter-spacing:.1em;margin-bottom:6px}
+.num-ctrl{display:flex;align-items:center;gap:6px}
+.num-btn{width:30px;height:30px;border-radius:6px;background:#fff;border:1px solid #ddd;color:#555;font-size:16px;display:flex;align-items:center;justify-content:center}
+.num-btn:active{background:#f0ede8}
+.num-val{min-width:46px;text-align:center;font-family:'Courier New',monospace;font-size:15px;color:#1a1a1a}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;margin-top:12px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}
+.btn{padding:7px 14px;border-radius:6px;font-size:12px;font-family:'Courier New',monospace;border:1px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.btn-log{background:#f0faf0;border-color:#c8e6c8 !important;color:#2e7d32}
+.btn-edit{background:#f7f6f2;border-color:#ddd !important;color:#666}
+.btn-save-log{background:#2e7d32;border-color:#2e7d32 !important;color:#fff;font-weight:700}
+.btn-cancel{background:transparent;border-color:#ddd !important;color:#aaa}
+
+/* COACH TIP */
+.coach-tip{background:#fffde7;border:1px solid #fff176;border-radius:8px;padding:9px 13px;margin:8px 0;display:flex;align-items:flex-start;gap:8px}
+.coach-tip-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.coach-tip-text{font-size:12px;color:#5d4037;font-family:'Courier New',monospace;line-height:1.5}
+
+/* REPLACE SUGGESTIONS */
+.replace-panel{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:14px;margin:10px 0}
+.suggest-card{background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between}
+.suggest-card:active{background:#e8f0fe;border-color:#1565c0}
+
+/* PR STRIP */
+.pr-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;margin-bottom:20px}
+.pr-card{background:#fff;border-radius:10px;padding:12px 14px;min-width:110px;flex:0 0 auto;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid #e8e6e0}
+
+/* SETTINGS */
+.settings-input{width:100%;padding:10px 14px;border-radius:8px;background:#fff;border:1px solid #ddd;color:#1a1a1a;font-size:13px;font-family:'Courier New',monospace;outline:none;margin-bottom:10px}
+.settings-btn{width:100%;padding:11px;border-radius:8px;font-family:'Courier New',monospace;font-size:13px;letter-spacing:.1em;border:1px solid #ddd;cursor:pointer}
+
+/* BODY MEASUREMENTS */
+.body-wrap{position:relative;margin:0 auto 20px;width:180px;height:340px}
+.mpoint{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2}
+.mdot{width:24px;height:24px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'Courier New',monospace;font-weight:700;color:#fff;transition:transform .1s}
+.mdot:active{transform:scale(1.15)}
+.mlabel{position:absolute;font-size:9px;font-family:'Courier New',monospace;white-space:nowrap;letter-spacing:.04em;pointer-events:none}
+.mcard{background:#fff;border:1px solid #e8e6e0;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.mcard-body{padding:13px 16px}
+.step-toggle{display:inline-flex;gap:3px;background:#f0ede8;border-radius:8px;padding:3px}
+.step-opt{padding:4px 9px;border-radius:5px;border:none;font-family:'Courier New',monospace;font-size:11px;color:#888;background:transparent;cursor:pointer;transition:all .12s}
+.step-opt.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+
+/* CALENDAR */
+.cal-wrap{background:#fff;border:1px solid #e8e6e0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f0ede8}
+.cal-nav{background:none;border:none;font-size:18px;color:#888;padding:4px 8px;border-radius:6px}
+.cal-nav:active{background:#f0ede8}
+.cal-month{font-size:15px;color:#1a1a1a;font-family:'Courier New',monospace}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-dow{text-align:center;padding:8px 2px;font-size:10px;font-family:'Courier New',monospace;color:#bbb;letter-spacing:.05em}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:8px;margin:2px;position:relative;transition:background .1s}
+.cal-day:hover{background:#f7f6f2}
+.cal-day.empty{cursor:default}
+.cal-day.trained{background:#f0faf0}
+.cal-day.selected{background:#e8f0fe !important;outline:2px solid #1565c0}
+.cal-num{font-size:13px;color:#555;font-family:'Courier New',monospace;line-height:1}
+.cal-dot{width:6px;height:6px;border-radius:50%;margin-top:2px}
+.cal-dot-multi{display:flex;gap:2px;margin-top:2px}
+.cal-dot-sm{width:4px;height:4px;border-radius:50%}
+
+/* DAY DETAIL */
+.day-detail{background:#f0faf0;border:1px solid #c8e6c8;border-radius:12px;padding:16px;margin-bottom:16px}
+.day-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.day-detail-close{background:none;border:none;font-size:18px;color:#888;cursor:pointer;padding:2px 4px}
+.day-entry-card{background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+
+/* WEEK BAR */
+.week-bar{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.week-cell{flex:0 0 auto;background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:8px 10px;text-align:center;min-width:44px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.week-cell.has-training{border-color:#c8e6c8;background:#f0faf0}
+.week-cell-day{font-size:9px;font-family:'Courier New',monospace;color:#bbb;text-transform:uppercase}
+.week-cell-num{font-size:15px;font-family:'Courier New',monospace;color:#ccc;margin:2px 0}
+.week-cell.has-training .week-cell-num{color:#2e7d32}
+.week-cell-dot{width:6px;height:6px;border-radius:50%;margin:0 auto}
+
+/* FREE TRAINING */
+.free-ex-card{background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.free-input{padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:13px;outline:none;font-family:'Courier New',monospace;background:#fff}
+
+/* BADGE */
+.badge-eq{font-size:10px;padding:2px 7px;border-radius:10px;font-family:'Courier New',monospace;border:1px solid}
+.logged-badge{font-size:11px;font-family:'Courier New',monospace;color:#2e7d32;font-weight:600}
+
+/* SESS TABS */
+.sess-tabs{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;flex-wrap:nowrap}
+.sess-tab{padding:5px 11px;border-radius:14px;font-size:11px;font-family:'Courier New',monospace;border:1px solid #ddd;cursor:pointer;background:#fff;white-space:nowrap;flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ─── PLAN DATA ────────────────────────────────────────────────────────────────
+const PHASES=[
+  {id:1,name:"Phase 1",subtitle:"Fundament",weeks:"Woche 1–6",focus:"Technik & Grundkraft",color:"#2e7d32",bg:"#f0faf0",border:"#c8e6c8",sessions:[
+    {id:"p1a",day:"Tag A",name:"Squat-Focus",exercises:[
+      {id:"p1a1",name:"Kniebeuge",eq:"LH",sets:3,reps:5,weight:80,unit:"kg",note:"Tiefe kontrollieren, RPE 7–8"},
+      {id:"p1a2",name:"Bankdrücken",eq:"LH",sets:3,reps:5,weight:70,unit:"kg",note:"Schulterblätter zusammenziehen"},
+      {id:"p1a3",name:"Pendlay Row",eq:"LH",sets:3,reps:5,weight:65,unit:"kg",note:"Horizontaler Rücken"},
+      {id:"p1a4",name:"Klimmzüge (eng)",eq:"Stange",sets:3,reps:6,weight:0,unit:"kg",note:"Vollständige ROM"},
+      {id:"p1a5",name:"Schulterdrücken",eq:"KH",sets:3,reps:10,weight:20,unit:"kg",note:"Stehend, pro Hand"},
+      {id:"p1a6",name:"Romanian Deadlift",eq:"LH",sets:3,reps:10,weight:60,unit:"kg",note:"Slow eccentric 4s"},
+    ]},
+    {id:"p1b",day:"Tag B",name:"Hinge-Focus",exercises:[
+      {id:"p1b1",name:"Kreuzheben",eq:"LH",sets:3,reps:5,weight:100,unit:"kg",note:"Stangennah, flacher Rücken"},
+      {id:"p1b2",name:"Schrägbankdrücken",eq:"KH",sets:3,reps:8,weight:24,unit:"kg",note:"45° Winkel, pro Hand"},
+      {id:"p1b3",name:"Klimmzüge (weit)",eq:"Stange",sets:3,reps:5,weight:0,unit:"kg",note:"Ellbogen zur Hüfte"},
+      {id:"p1b4",name:"Overhead Press",eq:"LH",sets:3,reps:6,weight:50,unit:"kg",note:"Kern anspannen"},
+      {id:"p1b5",name:"Lunges",eq:"KH",sets:3,reps:10,weight:16,unit:"kg",note:"Pro Seite, pro Hand"},
+      {id:"p1b6",name:"Hanging Leg Raise",eq:"Stange",sets:3,reps:10,weight:0,unit:"kg",note:"Kontrollierte Bewegung"},
+    ]},
+    {id:"p1c",day:"Tag C",name:"Press-Focus",exercises:[
+      {id:"p1c1",name:"Frontkniebeuge",eq:"LH",sets:3,reps:5,weight:65,unit:"kg",note:"Aufrechter Oberkörper"},
+      {id:"p1c2",name:"Dips",eq:"Stange",sets:3,reps:8,weight:0,unit:"kg",note:"Leicht vorgebeugt = Brust"},
+      {id:"p1c3",name:"Pendlay Row",eq:"LH",sets:3,reps:6,weight:65,unit:"kg",note:"Explosiv hoch, kontrolliert runter"},
+      {id:"p1c4",name:"Arnold Press",eq:"KH",sets:3,reps:10,weight:18,unit:"kg",note:"Volle Rotation, pro Hand"},
+      {id:"p1c5",name:"Bulg. Kniebeuge",eq:"KH",sets:3,reps:8,weight:16,unit:"kg",note:"Pro Seite"},
+      {id:"p1c6",name:"Plank",eq:"–",sets:3,reps:30,weight:0,unit:"sek",note:"Kern stabilisieren"},
+    ]},
+  ]},
+  {id:2,name:"Phase 2",subtitle:"Aufbau",weeks:"Woche 7–14",focus:"Hypertrophie-Block",color:"#1565c0",bg:"#e8f0fe",border:"#bad3f7",sessions:[
+    {id:"p2a",day:"Tag A",name:"Squat-Hypertrophie",exercises:[
+      {id:"p2a1",name:"Kniebeuge",eq:"LH",sets:4,reps:6,weight:90,unit:"kg",note:"Tempo 3-1-1, RPE 8"},
+      {id:"p2a2",name:"Bankdrücken",eq:"LH",sets:4,reps:8,weight:77,unit:"kg",note:"Pause 1s auf Brust"},
+      {id:"p2a3",name:"Klimmzüge (weit)",eq:"Stange",sets:4,reps:6,weight:5,unit:"kg",note:"+Gewicht wenn >8 sauber"},
+      {id:"p2a4",name:"Schrägbankdrücken",eq:"KH",sets:3,reps:10,weight:26,unit:"kg",note:"Stretch am Tiefpunkt"},
+      {id:"p2a5",name:"Einarm Row",eq:"KH",sets:3,reps:12,weight:30,unit:"kg",note:"Pro Seite"},
+      {id:"p2a6",name:"Romanian Deadlift",eq:"LH",sets:3,reps:10,weight:65,unit:"kg",note:"Slow eccentric 4s"},
+      {id:"p2a7",name:"Curl",eq:"KH",sets:3,reps:12,weight:14,unit:"kg",note:"Supination oben"},
+    ]},
+    {id:"p2b",day:"Tag B",name:"Hinge-Hypertrophie",exercises:[
+      {id:"p2b1",name:"Kreuzheben",eq:"LH",sets:4,reps:5,weight:115,unit:"kg",note:"RPE 8–9"},
+      {id:"p2b2",name:"Overhead Press",eq:"LH",sets:4,reps:6,weight:55,unit:"kg",note:"Strikte Form"},
+      {id:"p2b3",name:"Bulg. Kniebeuge",eq:"KH",sets:3,reps:10,weight:20,unit:"kg",note:"Pro Seite"},
+      {id:"p2b4",name:"Klimmzüge (Untergriff)",eq:"Stange",sets:3,reps:8,weight:5,unit:"kg",note:"Bizeps involvieren"},
+      {id:"p2b5",name:"KH Flyes",eq:"KH",sets:3,reps:12,weight:16,unit:"kg",note:"Stretch am Tiefpunkt"},
+      {id:"p2b6",name:"Face Pulls",eq:"KH",sets:3,reps:15,weight:8,unit:"kg",note:"Rotator Cuff"},
+      {id:"p2b7",name:"Hängendes Knieheben",eq:"Stange",sets:3,reps:15,weight:0,unit:"kg",note:"Becken kippen"},
+    ]},
+    {id:"p2c",day:"Tag C",name:"Volume-Push",exercises:[
+      {id:"p2c1",name:"Frontkniebeuge",eq:"LH",sets:4,reps:6,weight:70,unit:"kg",note:"Quads und Kern"},
+      {id:"p2c2",name:"Dips +Gewicht",eq:"Stange",sets:4,reps:8,weight:10,unit:"kg",note:"Brustfokus"},
+      {id:"p2c3",name:"Schulterdrücken",eq:"KH",sets:4,reps:10,weight:22,unit:"kg",note:"Pro Hand"},
+      {id:"p2c4",name:"Pendlay Row",eq:"LH",sets:4,reps:6,weight:75,unit:"kg",note:"Explosiv"},
+      {id:"p2c5",name:"Hammercurl",eq:"KH",sets:3,reps:12,weight:16,unit:"kg",note:"Pro Hand"},
+      {id:"p2c6",name:"Trizeps Overhead",eq:"KH",sets:3,reps:12,weight:18,unit:"kg",note:"Langer Kopf"},
+      {id:"p2c7",name:"Pallof Press",eq:"KH",sets:3,reps:12,weight:10,unit:"kg",note:"Pro Seite"},
+    ]},
+  ]},
+  {id:3,name:"Phase 3",subtitle:"Intensität",weeks:"Woche 15–20",focus:"Strength-Hypertrophie",color:"#e65100",bg:"#fff3e0",border:"#ffcc80",sessions:[
+    {id:"p3a",day:"Tag A",name:"Max Strength",exercises:[
+      {id:"p3a1",name:"Kniebeuge",eq:"LH",sets:3,reps:4,weight:105,unit:"kg",note:"Welle 5/4/3, RPE 8–9+"},
+      {id:"p3a2",name:"Bankdrücken",eq:"LH",sets:3,reps:4,weight:87,unit:"kg",note:"Explosiver Antrieb"},
+      {id:"p3a3",name:"Klimmzüge +Gewicht",eq:"Stange",sets:4,reps:5,weight:10,unit:"kg",note:"Schwer und kontrolliert"},
+      {id:"p3a4",name:"Romanian Deadlift",eq:"LH",sets:3,reps:8,weight:70,unit:"kg",note:"Nacharbeit"},
+      {id:"p3a5",name:"Curl",eq:"KH",sets:3,reps:10,weight:16,unit:"kg",note:"Pro Hand"},
+    ]},
+    {id:"p3b",day:"Tag B",name:"Hinge Strength",exercises:[
+      {id:"p3b1",name:"Kreuzheben",eq:"LH",sets:4,reps:4,weight:130,unit:"kg",note:"RPE 8–9"},
+      {id:"p3b2",name:"Overhead Press",eq:"LH",sets:4,reps:5,weight:60,unit:"kg",note:"Strikte Form"},
+      {id:"p3b3",name:"Schrägbankdrücken",eq:"KH",sets:4,reps:10,weight:28,unit:"kg",note:"Pro Hand"},
+      {id:"p3b4",name:"Klimmzüge (Untergriff)",eq:"Stange",sets:4,reps:8,weight:7,unit:"kg",note:"Controlled eccentric"},
+      {id:"p3b5",name:"Seitheben",eq:"KH",sets:4,reps:15,weight:10,unit:"kg",note:"Pro Hand"},
+      {id:"p3b6",name:"Hanging Leg Raise",eq:"Stange",sets:3,reps:12,weight:0,unit:"kg",note:"—"},
+    ]},
+    {id:"p3c",day:"Tag C",name:"Pump & Hypertrophie",exercises:[
+      {id:"p3c1",name:"Frontkniebeuge",eq:"LH",sets:3,reps:8,weight:75,unit:"kg",note:"Kontrolliert"},
+      {id:"p3c2",name:"Dips +Gewicht",eq:"Stange",sets:4,reps:8,weight:15,unit:"kg",note:"Max Gewicht für 8"},
+      {id:"p3c3",name:"Einarm Row",eq:"KH",sets:4,reps:10,weight:34,unit:"kg",note:"Voller ROM"},
+      {id:"p3c4",name:"Arnold Press",eq:"KH",sets:3,reps:12,weight:22,unit:"kg",note:"Slow eccentric"},
+      {id:"p3c5",name:"Trizeps Kickback",eq:"KH",sets:3,reps:15,weight:12,unit:"kg",note:"Isolation"},
+      {id:"p3c6",name:"Hammer Curl",eq:"KH",sets:3,reps:12,weight:18,unit:"kg",note:"Pro Hand"},
+    ]},
+  ]},
+  {id:4,name:"Phase 4",subtitle:"Peak",weeks:"Woche 21–24",focus:"Kraft-Peak",color:"#6a1b9a",bg:"#f3e5f5",border:"#ce93d8",sessions:[
+    {id:"p4a",day:"Tag A",name:"Squat/Press Peak",exercises:[
+      {id:"p4a1",name:"Kniebeuge",eq:"LH",sets:4,reps:3,weight:115,unit:"kg",note:"3RM Test"},
+      {id:"p4a2",name:"Bankdrücken",eq:"LH",sets:4,reps:3,weight:95,unit:"kg",note:"3RM Test"},
+      {id:"p4a3",name:"Klimmzüge +Gewicht",eq:"Stange",sets:3,reps:5,weight:15,unit:"kg",note:"Pflege"},
+      {id:"p4a4",name:"Romanian Deadlift",eq:"LH",sets:2,reps:10,weight:70,unit:"kg",note:"Recovery"},
+    ]},
+    {id:"p4b",day:"Tag B",name:"Deadlift/OHP Peak",exercises:[
+      {id:"p4b1",name:"Kreuzheben",eq:"LH",sets:4,reps:3,weight:145,unit:"kg",note:"3RM Test"},
+      {id:"p4b2",name:"Overhead Press",eq:"LH",sets:4,reps:3,weight:65,unit:"kg",note:"3RM Test"},
+      {id:"p4b3",name:"Schrägbankdrücken",eq:"KH",sets:2,reps:10,weight:28,unit:"kg",note:"Volumen"},
+      {id:"p4b4",name:"Klimmzüge (eng)",eq:"Stange",sets:3,reps:8,weight:10,unit:"kg",note:"Pflege"},
+    ]},
+    {id:"p4c",day:"Deload",name:"Aktive Erholung",exercises:[
+      {id:"p4c1",name:"Kniebeuge",eq:"LH",sets:2,reps:5,weight:60,unit:"kg",note:"50% Gewicht"},
+      {id:"p4c2",name:"Kreuzheben",eq:"LH",sets:2,reps:5,weight:80,unit:"kg",note:"50% Gewicht"},
+      {id:"p4c3",name:"Klimmzüge",eq:"Stange",sets:2,reps:5,weight:0,unit:"kg",note:"Leicht"},
+      {id:"p4c4",name:"Mobilität",eq:"–",sets:1,reps:1,weight:0,unit:"–",note:"Hüfte, T-Wirbel, Schulter 15 Min"},
+    ]},
+  ]},
+];
+
+// ─── LOKALER ÜBUNGSPOOL ───────────────────────────────────────────────────────
+// muscle: Beine|Brust|Rücken|Schulter|Arme|Core
+// alts: Array von Übungsnamen aus diesem Pool
+const POOL=[
+  // BEINE
+  {name:"Kniebeuge",eq:"LH",muscle:"Beine",sets:3,reps:5,weight:0,unit:"kg",note:"Tiefe kontrollieren",alts:["Goblet Squat","Bulg. Kniebeuge","Frontkniebeuge","Körpergewicht-Squat"]},
+  {name:"Frontkniebeuge",eq:"LH",muscle:"Beine",sets:3,reps:5,weight:0,unit:"kg",note:"Aufrechter Oberkörper",alts:["Kniebeuge","Goblet Squat","Bulg. Kniebeuge"]},
+  {name:"Goblet Squat",eq:"KH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"KH vor der Brust halten",alts:["Kniebeuge","Bulg. Kniebeuge","Körpergewicht-Squat"]},
+  {name:"Bulg. Kniebeuge",eq:"KH",muscle:"Beine",sets:3,reps:8,weight:0,unit:"kg",note:"Pro Seite, hinterer Fuß erhöht",alts:["Lunges","Goblet Squat","Körpergewicht-Squat"]},
+  {name:"Körpergewicht-Squat",eq:"–",muscle:"Beine",sets:3,reps:15,weight:0,unit:"kg",note:"Keine Zusatzlast nötig",alts:["Goblet Squat","Bulg. Kniebeuge","Lunges"]},
+  {name:"Lunges",eq:"KH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"Pro Seite, aufrechter Oberkörper",alts:["Bulg. Kniebeuge","Goblet Squat","Körpergewicht-Squat"]},
+  {name:"Romanian Deadlift",eq:"LH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"Slow eccentric 4s, Hüftscharniere",alts:["Hip Thrust","KH Romanian Deadlift","Rückenstrecker"]},
+  {name:"KH Romanian Deadlift",eq:"KH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"Gleiche Mechanik wie LH-Variante",alts:["Romanian Deadlift","Hip Thrust","Rückenstrecker"]},
+  {name:"Hip Thrust",eq:"KH",muscle:"Beine",sets:3,reps:12,weight:0,unit:"kg",note:"Schultern auf Bank, Hüfte hoch",alts:["Romanian Deadlift","Rückenstrecker","KH Romanian Deadlift"]},
+  // HINGE / RÜCKEN KETTE
+  {name:"Kreuzheben",eq:"LH",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Stangennah, flacher Rücken",alts:["Romanian Deadlift","KH Romanian Deadlift","Rückenstrecker"]},
+  {name:"Rückenstrecker",eq:"–",muscle:"Rücken",sets:3,reps:12,weight:0,unit:"kg",note:"Kontrolliert, keine Überstreckung",alts:["Romanian Deadlift","Hip Thrust","Superman"]},
+  {name:"Superman",eq:"–",muscle:"Rücken",sets:3,reps:15,weight:0,unit:"kg",note:"Bauchlagen, Arme und Beine heben",alts:["Rückenstrecker","Romanian Deadlift"]},
+  // BRUST
+  {name:"Bankdrücken",eq:"LH",muscle:"Brust",sets:3,reps:5,weight:0,unit:"kg",note:"Schulterblätter zusammenziehen",alts:["KH Bankdrücken","Liegestütze","Schrägbankdrücken"]},
+  {name:"Schrägbankdrücken",eq:"KH",muscle:"Brust",sets:3,reps:8,weight:0,unit:"kg",note:"45° Winkel, Stretch am Tiefpunkt",alts:["Bankdrücken","KH Bankdrücken","Liegestütze"]},
+  {name:"KH Bankdrücken",eq:"KH",muscle:"Brust",sets:3,reps:10,weight:0,unit:"kg",note:"Neutrale oder Pronationsgriff",alts:["Bankdrücken","Schrägbankdrücken","Liegestütze"]},
+  {name:"KH Flyes",eq:"KH",muscle:"Brust",sets:3,reps:12,weight:0,unit:"kg",note:"Weiter Bogen, Stretch am Tiefpunkt",alts:["Liegestütze","KH Bankdrücken","Schrägbankdrücken"]},
+  {name:"Liegestütze",eq:"–",muscle:"Brust",sets:3,reps:12,weight:0,unit:"kg",note:"Körper gerade wie Brett",alts:["KH Bankdrücken","Bankdrücken","Dips"]},
+  {name:"Dips",eq:"Stange",muscle:"Brust",sets:3,reps:8,weight:0,unit:"kg",note:"Leicht vorgebeugt = Brustfokus",alts:["Liegestütze","KH Bankdrücken","Bankdrücken"]},
+  // RÜCKEN / ZUG
+  {name:"Klimmzüge (eng)",eq:"Stange",muscle:"Rücken",sets:3,reps:6,weight:0,unit:"kg",note:"Vollständige ROM, Schulterblätter",alts:["Klimmzüge (weit)","Klimmzüge (Untergriff)","Einarm Row","Latzug KH"]},
+  {name:"Klimmzüge (weit)",eq:"Stange",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Ellbogen zur Hüfte ziehen",alts:["Klimmzüge (eng)","Klimmzüge (Untergriff)","Einarm Row","Latzug KH"]},
+  {name:"Klimmzüge (Untergriff)",eq:"Stange",muscle:"Rücken",sets:3,reps:6,weight:0,unit:"kg",note:"Bizeps involvieren",alts:["Klimmzüge (eng)","Klimmzüge (weit)","Einarm Row","Latzug KH"]},
+  {name:"Klimmzüge +Gewicht",eq:"Stange",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Gürtel oder KH zwischen Beinen",alts:["Klimmzüge (eng)","Klimmzüge (weit)","Einarm Row"]},
+  {name:"Einarm Row",eq:"KH",muscle:"Rücken",sets:3,reps:10,weight:0,unit:"kg",note:"Pro Seite, voller ROM",alts:["Pendlay Row","Latzug KH","Klimmzüge (eng)"]},
+  {name:"Pendlay Row",eq:"LH",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Horizontaler Rücken, explosiv hoch",alts:["Einarm Row","Latzug KH","Klimmzüge (eng)"]},
+  {name:"Latzug KH",eq:"KH",muscle:"Rücken",sets:3,reps:12,weight:0,unit:"kg",note:"Auf Bank liegend, Pullover-Bewegung",alts:["Einarm Row","Klimmzüge (eng)","Pendlay Row"]},
+  {name:"Face Pulls",eq:"KH",muscle:"Schulter",sets:3,reps:15,weight:0,unit:"kg",note:"Rotator Cuff, Ellbogen hoch",alts:["Seitheben","Schulterdrücken","Arnold Press"]},
+  // SCHULTER
+  {name:"Overhead Press",eq:"LH",muscle:"Schulter",sets:3,reps:6,weight:0,unit:"kg",note:"Kern anspannen, Stange über Kopf",alts:["Schulterdrücken","Arnold Press","Seitheben"]},
+  {name:"Schulterdrücken",eq:"KH",muscle:"Schulter",sets:3,reps:10,weight:0,unit:"kg",note:"Stehend, pro Hand",alts:["Overhead Press","Arnold Press","Seitheben"]},
+  {name:"Arnold Press",eq:"KH",muscle:"Schulter",sets:3,reps:10,weight:0,unit:"kg",note:"Volle Rotation, pro Hand",alts:["Schulterdrücken","Overhead Press","Seitheben"]},
+  {name:"Seitheben",eq:"KH",muscle:"Schulter",sets:3,reps:15,weight:0,unit:"kg",note:"Leichtes Gewicht, Kontrolle",alts:["Face Pulls","Schulterdrücken","Arnold Press"]},
+  // ARME
+  {name:"Curl",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Supination oben",alts:["Hammercurl","Konzentrationscurl","Klimmzüge (Untergriff)"]},
+  {name:"Hammercurl",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Neutralgriff, Unterarm mittrainieren",alts:["Curl","Konzentrationscurl"]},
+  {name:"Konzentrationscurl",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Ellbogen auf Oberschenkel, Isolation",alts:["Curl","Hammercurl"]},
+  {name:"Trizeps Overhead",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Langer Kopf, über Kopf",alts:["Trizeps Kickback","Dips","Liegestütze"]},
+  {name:"Trizeps Kickback",eq:"KH",muscle:"Arme",sets:3,reps:15,weight:0,unit:"kg",note:"Isolation, Ellbogen am Körper",alts:["Trizeps Overhead","Dips"]},
+  // CORE
+  {name:"Plank",eq:"–",muscle:"Core",sets:3,reps:30,weight:0,unit:"sek",note:"Kern stabilisieren, gerade Linie",alts:["Hängendes Knieheben","Hanging Leg Raise","Pallof Press"]},
+  {name:"Hanging Leg Raise",eq:"Stange",muscle:"Core",sets:3,reps:10,weight:0,unit:"kg",note:"Kontrollierte Bewegung, Becken kippen",alts:["Hängendes Knieheben","Plank","Pallof Press"]},
+  {name:"Hängendes Knieheben",eq:"Stange",muscle:"Core",sets:3,reps:15,weight:0,unit:"kg",note:"Becken kippen für maximale Aktivierung",alts:["Hanging Leg Raise","Plank","Pallof Press"]},
+  {name:"Pallof Press",eq:"KH",muscle:"Core",sets:3,reps:12,weight:0,unit:"kg",note:"Pro Seite, anti-Rotation",alts:["Plank","Hanging Leg Raise"]},
+];
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function ls(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}}
+function lss(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function eqIcon(eq){return eq==='LH'?'🏋️':eq==='KH'?'💪':eq==='Stange'?'🔗':'⚡'}
+function fmtDate(iso){return iso?new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):''}
+function dateKey(iso){return iso?iso.split('T')[0]:''}
+function todayKey(){return new Date().toISOString().split('T')[0]}
+
+// ─── MIGRATION ────────────────────────────────────────────────────────────────
+(function migrate(){
+  const DATA_KEY='training_app_data';
+  // Schon migriert?
+  const existing=ls(DATA_KEY,null);
+  if(existing&&existing._migrated) return;
+
+  const oldLogKeys=['fp3_log','fp2_log','fp_log','fitapp_log'];
+  const oldPlanKeys=['fp3_plan','fp2_plan','fp_plan','fitapp_plan'];
+  const oldMeasKeys=['fp3_meas','fp2_meas'];
+  const oldWlogKeys=['fp3_wlog','fp2_wlog'];
+  const oldFreeKeys=['fp3_free','fp2_free'];
+
+  // Log zusammenführen
+  let mergedLog=existing?existing.log||{}:{};
+  oldLogKeys.forEach(k=>{
+    try{
+      const old=JSON.parse(localStorage.getItem(k)||'{}');
+      Object.entries(old).forEach(([exId,entries])=>{
+        if(!mergedLog[exId])mergedLog[exId]=[];
+        const existingDates=new Set(mergedLog[exId].map(e=>e.date));
+        entries.forEach(e=>{if(!existingDates.has(e.date))mergedLog[exId].push(e);});
+      });
+    }catch{}
+  });
+
+  // Plan: nimm den ersten der vorhanden ist
+  let mergedPlan=existing?existing.plan||null:null;
+  if(!mergedPlan){
+    for(const k of oldPlanKeys){
+      try{const v=localStorage.getItem(k);if(v){mergedPlan=JSON.parse(v);break;}}catch{}
+    }
+  }
+
+  // Maße
+  let mergedMeas=existing?existing.measurements||{}:{};
+  for(const k of oldMeasKeys){
+    try{const v=localStorage.getItem(k);if(v&&Object.keys(mergedMeas).length===0){mergedMeas=JSON.parse(v);break;}}catch{}
+  }
+
+  // Gewicht
+  let mergedWlog=existing?existing.weightLog||[]:[]; 
+  for(const k of oldWlogKeys){
+    try{const v=localStorage.getItem(k);if(v&&mergedWlog.length===0){mergedWlog=JSON.parse(v);break;}}catch{}
+  }
+
+  // Freies Training
+  let mergedFree=existing?existing.freeSession||{exercises:[]}:{exercises:[]};
+  for(const k of oldFreeKeys){
+    try{const v=localStorage.getItem(k);if(v&&(!mergedFree.exercises||mergedFree.exercises.length===0)){mergedFree=JSON.parse(v);break;}}catch{}
+  }
+
+  const newData={
+    _migrated:true,
+    _version:5,
+    _migratedAt:new Date().toISOString(),
+    log:mergedLog,
+    plan:mergedPlan,
+    measurements:mergedMeas,
+    weightLog:mergedWlog,
+    freeSession:mergedFree,
+  };
+  lss(DATA_KEY,newData);
+  console.log('Migration OK. Einträge:', Object.values(mergedLog).reduce((a,b)=>a+b.length,0));
+})();
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const DATA_KEY='training_app_data';
+function loadData(){return ls(DATA_KEY,{});}
+function saveData(patch){
+  const d={...loadData(),...patch,_migrated:true,_version:5};
+  lss(DATA_KEY,d);
+}
+
+const _d=loadData();
+// Plan validieren: muss Array sein und erstes Element muss color haben
+function validPlan(p){try{return Array.isArray(p)&&p.length>0&&typeof p[0].color==='string';}catch{return false;}}
+const S={
+  plan:validPlan(_d.plan)?_d.plan:clone(PHASES),
+  measurements:_d.measurements||{},
+  weightLog:_d.weightLog||[],
+  log:_d.log||{},
+  freeSession:_d.freeSession||{exercises:[]},
+  // UI state (not persisted)
+  view:'dashboard',
+  prevView:null,
+  phase:0, session:0,
+  editing:null, editVals:{},
+  logMode:null, logEntry:{},
+  justLogged:null,
+  weightStep:2.5,
+  activeMeasure:null,
+  showReset:false,
+  showFullReset:false,
+  importMsg:null,
+  replaceMode:null,
+  replaceSuggestions:[],
+  freeInput:{name:'',sets:3,reps:10,weight:0,unit:'kg',note:''},
+  freeAdding:false,
+  calYear:new Date().getFullYear(),
+  calMonth:new Date().getMonth(),
+  calSelected:null,
+  storageMsg:null,
+};
+
+function persist(){
+  saveData({
+    log:S.log,
+    plan:S.plan,
+    measurements:S.measurements,
+    weightLog:S.weightLog,
+    freeSession:S.freeSession,
+  });
+}
+
+function curPh(){return S.plan[S.phase]}
+function curSess(){return curPh().sessions[S.session]}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function setView(v){S.prevView=(v!==S.view)?S.view:S.prevView;S.view=v;S.editing=null;S.logMode=null;render()}
+function goBack(){S.view=S.prevView||'dashboard';S.prevView=null;S.editing=null;S.logMode=null;render()}
+function goSession(i){S.prevView=S.view;S.session=i;S.view='session';S.editing=null;S.logMode=null;render()}
+function setPhaseView(i){S.phase=i;S.session=0;goSession(0)}
+function switchSess(i){S.session=i;S.editing=null;S.logMode=null;render()}
+
+// ─── LOG HELPERS ──────────────────────────────────────────────────────────────
+function buildDateMap(){
+  const m={};
+  S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(ex=>{
+    (S.log[ex.id]||[]).forEach((e,i)=>{
+      const k=dateKey(e.date);if(!k)return;
+      if(!m[k])m[k]=[];
+      m[k].push({exName:ex.name,entry:e,exId:ex.id,idx:i,phaseColor:ph.color,phaseBg:ph.bg,phaseBorder:ph.border});
+    });
+  })));
+  return m;
+}
+
+// ─── REGELBASIERTER COACH ─────────────────────────────────────────────────────
+function getCoachTip(ex){
+  const hist=S.log[ex.id]||[];
+  if(hist.length===0) return {icon:'📋',text:'Kein Verlauf – starte mit dem Plangewicht und fokussiere Technik.'};
+  const last=hist[hist.length-1];
+  const goalSets=ex.sets, goalReps=ex.reps;
+  const doneSets=last.sets, doneReps=last.reps, doneWeight=last.weight;
+
+  if(ex.unit==='sek'||ex.unit==='–') return {icon:'✓',text:`Letztes Mal: ${doneSets}×${doneReps}. Ziel halten oder 5 Sek erhöhen.`};
+
+  const fullSuccess=doneSets>=goalSets&&doneReps>=goalReps;
+  const close=doneSets>=goalSets&&doneReps>=Math.round(goalReps*0.85);
+  const failed=doneReps<Math.round(goalReps*0.85);
+
+  if(hist.length>=3){
+    const last3=hist.slice(-3);
+    const stagnated=last3.every(e=>e.weight===doneWeight&&e.reps>=Math.round(goalReps*0.85));
+    if(stagnated&&fullSuccess) return {icon:'🔄',text:`${doneWeight}kg seit 3 Einheiten stabil. Bereit für +2,5 kg – oder Übung ersetzen für neue Reize.`};
+  }
+
+  if(fullSuccess){
+    const step=doneWeight>0?2.5:0;
+    if(step>0) return {icon:'📈',text:`Ziel erreicht (${doneSets}×${doneReps} · ${doneWeight}kg). Heute: +${step} kg → ${doneWeight+step} kg versuchen.`};
+    return {icon:'✓',text:`Ziel erreicht (${doneSets}×${doneReps}). Körpergewicht-Übung – Sätze oder Wiederholungen erhöhen.`};
+  }
+  if(close) return {icon:'➡',text:`Knapp geschafft (${doneSets}×${doneReps} · ${doneWeight}kg). Gewicht halten, gleiche Sätze/Wdhl.`};
+  if(failed){
+    const newW=doneWeight>0?parseFloat((doneWeight*0.95).toFixed(1)):0;
+    return {icon:'📉',text:`Ziel verfehlt (${doneReps}/${goalReps} Wdhl). Gewicht auf ${newW}kg reduzieren und Technik prüfen.`};
+  }
+  return {icon:'➡',text:`Letztes Mal: ${doneSets}×${doneReps} · ${doneWeight}kg. Gleiche Parameter heute.`};
+}
+
+// ─── ÜBUNG ERSETZEN (lokal) ───────────────────────────────────────────────────
+function startReplace(exId, exName, exEq){
+  S.replaceMode=exId;
+  S.editing=null; S.logMode=null;
+
+  // Finde Alternativen aus dem Pool
+  const poolEntry=POOL.find(p=>p.name===exName);
+  let suggestions=[];
+
+  if(poolEntry&&poolEntry.alts.length>0){
+    // Direkte Alternativen aus dem Pool
+    suggestions=poolEntry.alts
+      .map(altName=>POOL.find(p=>p.name===altName))
+      .filter(Boolean)
+      .slice(0,3);
+  }
+
+  // Falls keine direkten Alternativen: gleiche Muskelgruppe
+  if(suggestions.length<3&&poolEntry){
+    const byMuscle=POOL.filter(p=>p.muscle===poolEntry.muscle&&p.name!==exName&&!suggestions.find(s=>s.name===p.name));
+    suggestions=[...suggestions,...byMuscle].slice(0,3);
+  }
+
+  // Fallback: ähnliches Equipment
+  if(suggestions.length<3){
+    const byEq=POOL.filter(p=>p.eq===exEq&&p.name!==exName&&!suggestions.find(s=>s.name===p.name));
+    suggestions=[...suggestions,...byEq].slice(0,3);
+  }
+
+  S.replaceSuggestions=suggestions.slice(0,3);
+  render();
+}
+
+function applyReplace(exId, suggIdx){
+  const s=S.replaceSuggestions[suggIdx];
+  if(!s)return;
+  const ex=curSess().exercises.find(e=>e.id===exId);
+  if(!ex)return;
+  const oldName=ex.name;
+  ex.name=s.name; ex.eq=s.eq;
+  ex.sets=s.sets; ex.reps=s.reps;
+  ex.weight=s.weight; ex.unit=s.unit||'kg';
+  ex.note=s.note+' (ersetzt: '+oldName+')';
+  S.replaceMode=null; S.replaceSuggestions=[];
+  persist(); render();
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+function editDelta(k,d,min,max){const step=k==='weight'?d*S.weightStep/Math.abs(d||1):d;const n=parseFloat((S.editVals[k]+step).toFixed(2));if(n>=min&&n<=max){S.editVals[k]=n;render();}}
+function logDelta(k,d,min,max){const step=k==='weight'?d*S.weightStep/Math.abs(d||1):d;const n=parseFloat((S.logEntry[k]+step).toFixed(2));if(n>=min&&n<=max){S.logEntry[k]=n;render();}}
+function setWeightStep(s){S.weightStep=s;render();}
+function startEdit(id,sets,reps,weight){S.editing=id;S.editVals={sets,reps,weight};S.logMode=null;render()}
+function startLog(id,sets,reps,weight){S.logMode=id;S.logEntry={sets,reps,weight};S.editing=null;render()}
+function saveEdit(id){const ex=curSess().exercises.find(e=>e.id===id);if(ex)Object.assign(ex,S.editVals);S.editing=null;persist();render()}
+function saveLog(id){if(!S.log[id])S.log[id]=[];S.log[id].push({...S.logEntry,date:new Date().toISOString()});S.logMode=null;S.justLogged=id;persist();render();setTimeout(()=>{S.justLogged=null;render()},2500)}
+function delLog(exId,idx){if(!S.log[exId])return;S.log[exId].splice(idx,1);persist();render()}
+function calPrev(){S.calMonth--;if(S.calMonth<0){S.calMonth=11;S.calYear--;}render()}
+function calNext(){S.calMonth++;if(S.calMonth>11){S.calMonth=0;S.calYear++;}render()}
+function selectCalDay(dk){S.calSelected=S.calSelected===dk?null:dk;render()}
+function doReset(){S.plan=clone(PHASES);S.showReset=false;persist();render()}
+
+function doFullReset(){
+  // Alle Keys löschen
+  const allKeys=['training_app_data','fp3_log','fp3_plan','fp3_meas','fp3_wlog','fp3_free','fp3_chat','fp3_key','fp3_gkey','fp3_groqkey','fp3_orkey','fp3_prov','fp3_migrated','fp2_log','fp2_plan','fp2_meas','fp2_wlog','fp_log','fp_plan','fp_key','fitapp_log','fitapp_plan','fitapp_apikey'];
+  allKeys.forEach(k=>localStorage.removeItem(k));
+  // State zurücksetzen
+  S.log={}; S.plan=clone(PHASES); S.measurements={}; S.weightLog=[]; S.freeSession={exercises:[]};
+  S.showFullReset=false;
+  persist(); render();
+}
+
+function checkStorage(){
+  const oldKeys=['fp3_log','fp3_plan','fp3_meas','fp3_wlog','fp3_free','fp2_log','fp2_plan','fp_log','fp_plan','fitapp_log'];
+  const found=oldKeys.filter(k=>localStorage.getItem(k)!==null);
+  if(found.length===0){
+    S.storageMsg={ok:true,text:'✓ Keine alten Daten gefunden. Alles sauber.'};
+  } else {
+    S.storageMsg={ok:false,text:`⚠ ${found.length} alte Keys gefunden: ${found.join(', ')}. Starte die App neu um erneut zu migrieren.`};
+  }
+  render();
+  setTimeout(()=>{S.storageMsg=null;render();},5000);
+}
+
+// ─── EXPORT / IMPORT ──────────────────────────────────────────────────────────
+function exportData(){
+  const data={version:5,exported:new Date().toISOString(),log:S.log,plan:S.plan,measurements:S.measurements,weightLog:S.weightLog,freeSession:S.freeSession};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`krafttraining-backup-${todayKey()}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.version||!data.log){S.importMsg={ok:false,text:'⚠ Ungültige Datei.'};render();return;}
+      if(data.log) S.log=data.log;
+      if(data.plan) S.plan=data.plan;
+      if(data.measurements) S.measurements=data.measurements;
+      if(data.weightLog) S.weightLog=data.weightLog;
+      if(data.freeSession) S.freeSession=data.freeSession;
+      persist();
+      const count=Object.values(S.log).reduce((a,b)=>a+b.length,0);
+      S.importMsg={ok:true,text:`✓ Import OK! ${count} Einträge wiederhergestellt.`};
+      render(); setTimeout(()=>{S.importMsg=null;render();},4000);
+    }catch(err){S.importMsg={ok:false,text:'⚠ Fehler: '+err.message};render();}
+  };
+  reader.readAsText(file);
+}
+
+// ─── BODY MEASURE ACTIONS ─────────────────────────────────────────────────────
+function openMeasure(key){S.activeMeasure=S.activeMeasure===key?null:key;render();setTimeout(()=>{const el=document.getElementById('meas-input');if(el){el.focus();el.select();}},80);}
+function saveMeasure(key){
+  const el=document.getElementById('meas-input');if(!el)return;
+  const val=parseFloat(el.value);if(isNaN(val)||val<=0)return;
+  if(!S.measurements[key])S.measurements[key]=[];
+  const today=todayKey();
+  const idx=S.measurements[key].findIndex(e=>dateKey(e.date)===today);
+  const entry={value:val,date:new Date().toISOString()};
+  if(idx>=0)S.measurements[key][idx]=entry;else S.measurements[key].push(entry);
+  if(key==='gewicht'){const wi=S.weightLog.findIndex(e=>dateKey(e.date)===today);if(wi>=0)S.weightLog[wi]=entry;else S.weightLog.push(entry);}
+  persist();render();
+}
+function delMeasure(key,idx){if(!S.measurements[key])return;S.measurements[key].splice(idx,1);persist();render();}
+
+// ─── FREE TRAINING ACTIONS ────────────────────────────────────────────────────
+function freeDelta(k,d,min,max){const n=parseFloat((S.freeInput[k]+d).toFixed(2));if(n>=min&&n<=max){S.freeInput[k]=n;render();}}
+function saveFreeEx(){
+  const nameEl=document.getElementById('free-name');
+  const noteEl=document.getElementById('free-note');
+  const name=(nameEl?nameEl.value:S.freeInput.name).trim();
+  if(!name)return;
+  if(!S.freeSession.exercises)S.freeSession.exercises=[];
+  S.freeSession.exercises.push({name,sets:S.freeInput.sets,reps:S.freeInput.reps,weight:S.freeInput.weight,unit:S.freeInput.unit||'kg',note:noteEl?noteEl.value.trim():'',date:new Date().toISOString()});
+  S.freeAdding=false; S.freeInput={name:'',sets:3,reps:10,weight:0,unit:'kg',note:''};
+  persist();render();
+}
+function delFreeEx(idx){S.freeSession.exercises.splice(idx,1);persist();render();}
+
+// ─── RENDER: DASHBOARD ────────────────────────────────────────────────────────
+function rDash(){
+  const ph=curPh();
+  const dateMap=buildDateMap();
+  const totalDays=Object.keys(dateMap).length;
+  const loggedEx=Object.keys(S.log).filter(k=>(S.log[k]||[]).length>0).length;
+  const now=new Date(); const dow=(now.getDay()+6)%7;
+  const weekDays=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(now); d.setDate(d.getDate()-dow+i);
+    const dk=d.toISOString().split('T')[0];
+    weekDays.push({dk,label:['Mo','Di','Mi','Do','Fr','Sa','So'][i],num:d.getDate(),trained:!!(dateMap[dk]&&dateMap[dk].length>0),isToday:dk===todayKey()});
+  }
+  return `<div class="content">
+  <div class="hero" style="background:${ph.bg};border-color:${ph.border}">
+    <div style="font-size:11px;letter-spacing:.25em;color:${ph.color};font-family:'Courier New',monospace;margin-bottom:4px">${ph.weeks}</div>
+    <div style="font-size:23px;color:#1a1a1a;margin-bottom:3px">${ph.name}: ${ph.subtitle}</div>
+    <div style="font-size:13px;color:#666">${ph.focus}</div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-box"><div style="font-size:18px">📅</div><div class="stat-val" style="color:${ph.color}">${totalDays}</div><div class="stat-lbl">Trainingstage</div></div>
+    <div class="stat-box"><div style="font-size:18px">📊</div><div class="stat-val" style="color:${ph.color}">${loggedEx}</div><div class="stat-lbl">Übungen</div></div>
+    <div class="stat-box"><div style="font-size:18px">🏔️</div><div class="stat-val" style="color:${ph.color}">${S.phase+1}/4</div><div class="stat-lbl">Phase</div></div>
+  </div>
+  <div class="slabel">Diese Woche</div>
+  <div class="week-bar">
+    ${weekDays.map(w=>`<div class="week-cell${w.trained?' has-training':''}" style="${w.isToday?'border-color:#1565c0;outline:2px solid #1565c055':''}">
+      <div class="week-cell-day">${w.label}</div>
+      <div class="week-cell-num">${w.num}</div>
+      <div class="week-cell-dot" style="background:${w.trained?ph.color:'#eee'}"></div>
+    </div>`).join('')}
+  </div>
+  <div class="slabel">Phasen</div>
+  <div class="phase-grid">
+    ${S.plan.map((p,i)=>`<button class="phase-btn" style="background:${i===S.phase?p.bg:'#fff'};border-color:${i===S.phase?p.border:'#e8e6e0'}" onclick="setPhaseView(${i})">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:11px;color:${p.color};font-family:'Courier New',monospace">${p.name}</span>
+        ${i===S.phase?`<span style="font-size:9px;color:${p.color};font-family:'Courier New',monospace">● AKTIV</span>`:''}
+      </div>
+      <div style="font-size:14px;color:#1a1a1a">${p.subtitle}</div>
+      <div style="font-size:11px;color:#999;margin-top:2px">${p.weeks}</div>
+    </button>`).join('')}
+  </div>
+  <div class="slabel">Einheiten · ${ph.name}</div>
+  ${ph.sessions.map((s,i)=>`<button class="sess-btn" onclick="goSession(${i})">
+    <div>
+      <div style="font-size:11px;color:${ph.color};font-family:'Courier New',monospace;letter-spacing:.1em;margin-bottom:2px">${s.day}</div>
+      <div style="font-size:15px;color:#1a1a1a">${s.name}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${s.exercises.length} Übungen</div>
+    </div>
+    <span style="color:#ccc;font-size:20px">›</span>
+  </button>`).join('')}
+  </div>`;
+}
+
+// ─── RENDER: SESSION ──────────────────────────────────────────────────────────
+function rSession(){
+  const ph=curPh(); const sess=curSess(); const c=ph.color;
+  const exHtml=sess.exercises.map(ex=>{
+    const hist=S.log[ex.id]||[];
+    const last=hist[hist.length-1];
+    const isEdit=S.editing===ex.id;
+    const isLog=S.logMode===ex.id;
+    const justLogged=S.justLogged===ex.id;
+    const isReplace=S.replaceMode===ex.id;
+    const tip=getCoachTip(ex);
+
+    let statsHtml='';
+    if(!isEdit){
+      statsHtml=`<div class="ex-stats">
+        <div class="ex-stat"><div class="ex-stat-val" style="color:${c}">${ex.sets}</div><div class="ex-stat-lbl">Sätze</div></div>
+        <div class="ex-stat"><div class="ex-stat-val" style="color:${c}">${ex.reps}</div><div class="ex-stat-lbl">${ex.unit==='sek'?'Sek':'Wdhl'}</div></div>
+        ${ex.unit!=='–'&&ex.unit!=='sek'?`<div class="ex-stat"><div class="ex-stat-val" style="color:${ex.weight>0?'#1a1a1a':'#ccc'}">${ex.weight>0?ex.weight:'—'}</div><div class="ex-stat-lbl">kg</div></div>`:''}
+        ${last?`<div class="last-box"><div class="last-val">${last.sets}×${last.reps}·${last.weight}kg</div><div class="last-lbl">Letztes Mal</div></div>`:''}
+      </div>`;
+    }
+
+    let editHtml='';
+    if(isEdit){const ev=S.editVals;
+      editHtml=`<div class="edit-panel">
+        <div class="panel-lbl" style="color:#888">Plan anpassen</div>
+        <div class="num-row">
+          <div class="num-group"><label>SÄTZE</label><div class="num-ctrl">
+            <button class="num-btn" onclick="editDelta('sets',-1,1,8)">−</button><span class="num-val">${ev.sets}</span><button class="num-btn" onclick="editDelta('sets',1,1,8)">+</button>
+          </div></div>
+          <div class="num-group"><label>WDHL</label><div class="num-ctrl">
+            <button class="num-btn" onclick="editDelta('reps',-1,1,50)">−</button><span class="num-val">${ev.reps}</span><button class="num-btn" onclick="editDelta('reps',1,1,50)">+</button>
+          </div></div>
+          ${ex.unit!=='–'&&ex.unit!=='sek'?`<div class="num-group"><label>KG</label><div class="num-ctrl">
+            <button class="num-btn" onclick="editDelta('weight',-1,0,400)">−</button><span class="num-val">${ev.weight}</span><button class="num-btn" onclick="editDelta('weight',1,0,400)">+</button>
+          </div>
+          <div class="step-toggle" style="margin-top:6px">${[0.5,1,2.5,5].map(s=>`<button class="step-opt${S.weightStep===s?' active':''}" onclick="setWeightStep(${s})">${s}</button>`).join('')}</div>
+          </div>`:''}
+        </div>
+      </div>`;
+    }
+
+    let logHtml='';
+    if(isLog){const lv=S.logEntry;
+      logHtml=`<div class="log-panel">
+        <div class="panel-lbl" style="color:#2e7d32">Einheit eintragen</div>
+        <div class="num-row">
+          <div class="num-group"><label style="color:#4caf50">SÄTZE</label><div class="num-ctrl">
+            <button class="num-btn" onclick="logDelta('sets',-1,1,8)">−</button><span class="num-val">${lv.sets}</span><button class="num-btn" onclick="logDelta('sets',1,1,8)">+</button>
+          </div></div>
+          <div class="num-group"><label style="color:#4caf50">WDHL</label><div class="num-ctrl">
+            <button class="num-btn" onclick="logDelta('reps',-1,1,50)">−</button><span class="num-val">${lv.reps}</span><button class="num-btn" onclick="logDelta('reps',1,1,50)">+</button>
+          </div></div>
+          ${ex.unit!=='–'?`<div class="num-group"><label style="color:#4caf50">KG</label><div class="num-ctrl">
+            <button class="num-btn" onclick="logDelta('weight',-1,0,400)">−</button><span class="num-val">${lv.weight}</span><button class="num-btn" onclick="logDelta('weight',1,0,400)">+</button>
+          </div>
+          <div class="step-toggle" style="margin-top:6px">${[0.5,1,2.5,5].map(s=>`<button class="step-opt${S.weightStep===s?' active':''}" onclick="setWeightStep(${s})">${s}</button>`).join('')}</div>
+          </div>`:''}
+        </div>
+      </div>`;
+    }
+
+    let replaceHtml='';
+    if(isReplace){
+      replaceHtml=`<div class="replace-panel">
+        <div style="font-size:10px;color:#f57f17;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px">⚡ ALTERNATIVE WÄHLEN</div>
+        ${S.replaceSuggestions.length===0?`<div style="font-size:13px;color:#888;padding:4px 0">Keine Alternativen im Pool gefunden.</div>`:''}
+        ${S.replaceSuggestions.map((s,i)=>`<div class="suggest-card" onclick="applyReplace('${ex.id}',${i})">
+          <div>
+            <div style="font-size:14px;color:#1a1a1a">${s.name}</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">${s.note}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:10px">
+            <div style="font-size:12px;font-family:'Courier New',monospace;color:#1565c0">${s.sets}×${s.reps}</div>
+            <div style="font-size:11px;color:#aaa">${s.eq}</div>
+          </div>
+        </div>`).join('')}
+        <button onclick="S.replaceMode=null;S.replaceSuggestions=[];render()" style="margin-top:4px;padding:6px 12px;border-radius:6px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:11px;cursor:pointer">Abbrechen</button>
+      </div>`;
+    }
+
+    let btns='';
+    if(!isEdit&&!isLog&&!isReplace) btns=`
+      <button class="btn btn-log" onclick="startLog('${ex.id}',${ex.sets},${ex.reps},${ex.weight})">+ Eintragen</button>
+      <button class="btn btn-edit" onclick="startEdit('${ex.id}',${ex.sets},${ex.reps},${ex.weight})">✎ Anpassen</button>
+      <button class="btn" style="background:#fff8e1;border:1px solid #ffe082 !important;color:#f57f17" onclick="startReplace('${ex.id}','${ex.name}','${ex.eq}')">⚡ Ersetzen</button>`;
+    else if(isEdit) btns=`
+      <button class="btn" style="background:${c};color:#fff;border-color:${c};font-weight:700" onclick="saveEdit('${ex.id}')">✓ Speichern</button>
+      <button class="btn btn-cancel" onclick="S.editing=null;render()">Abbrechen</button>`;
+    else if(isLog) btns=`
+      <button class="btn btn-save-log" onclick="saveLog('${ex.id}')">✓ Speichern</button>
+      <button class="btn btn-cancel" onclick="S.logMode=null;render()">Abbrechen</button>`;
+
+    const histStrip=hist.length>0?`<div class="hist-strip">
+      <span style="font-size:9px;color:#bbb;font-family:'Courier New',monospace;white-space:nowrap">VERLAUF</span>
+      ${hist.map((e,i)=>`<span class="hist-chip">
+        <span>${e.sets}×${e.reps}·${e.weight}kg${e.date?' · '+fmtDate(e.date):''}</span>
+        <button class="hdel" onclick="delLog('${ex.id}',${i})">✕</button>
+      </span>`).join('')}
+    </div>`:'';
+
+    return `<div class="excard">
+      <div class="excard-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:15px;color:#1a1a1a">${eqIcon(ex.eq)} ${ex.name}</span>
+            <span class="badge-eq" style="background:${ph.bg};color:${c};border-color:${ph.border}">${ex.eq}</span>
+          </div>
+          ${justLogged?`<span class="logged-badge">✓ Eingetragen!</span>`:''}
+        </div>
+        <div style="font-size:12px;color:#aaa;font-style:italic;margin-bottom:2px">${ex.note}</div>
+        ${statsHtml}
+        <div class="coach-tip">
+          <span class="coach-tip-icon">${tip.icon}</span>
+          <span class="coach-tip-text">${tip.text}</span>
+        </div>
+        ${editHtml}${logHtml}${replaceHtml}
+        <div class="btn-row">${btns}</div>
+      </div>
+      ${histStrip}
+    </div>`;
+  }).join('');
+
+  return `<div class="content">
+  <div style="background:${ph.bg};border:1px solid ${ph.border};border-radius:12px;padding:16px 18px;margin-bottom:14px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;color:${c};font-family:'Courier New',monospace;letter-spacing:.15em">${ph.name} · ${sess.day}</div>
+        <div style="font-size:19px;color:#1a1a1a;margin-top:2px">${sess.name}</div>
+      </div>
+      <div class="sess-tabs">
+        ${ph.sessions.map((s,i)=>`<button class="sess-tab" style="background:${i===S.session?ph.bg:'#fff'};border-color:${i===S.session?ph.border:'#ddd'};color:${i===S.session?c:'#888'}" onclick="switchSess(${i})">${s.day}</button>`).join('')}
+      </div>
+    </div>
+  </div>
+  ${exHtml}
+  </div>`;
+}
+
+// ─── RENDER: CALENDAR ─────────────────────────────────────────────────────────
+function rCalendar(){
+  const dateMap=buildDateMap();
+  const y=S.calYear, m=S.calMonth;
+  const monthNames=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  const dowLabels=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  const today=todayKey();
+  const firstDow=(new Date(y,m,1).getDay()+6)%7;
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  let dayCells='';
+  for(let i=0;i<firstDow;i++) dayCells+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dk=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const entries=dateMap[dk]||[];
+    const trained=entries.length>0;
+    const isToday=dk===today;
+    const isSelected=dk===S.calSelected;
+    const colors=[...new Set(entries.map(e=>e.phaseColor))];
+    let dotHtml='';
+    if(trained){
+      if(colors.length===1) dotHtml=`<div class="cal-dot" style="background:${colors[0]}"></div>`;
+      else dotHtml=`<div class="cal-dot-multi">${colors.slice(0,3).map(c=>`<div class="cal-dot-sm" style="background:${c}"></div>`).join('')}</div>`;
+    }
+    const cls=['cal-day',trained?'trained':'',isToday?'today':'',isSelected?'selected':''].filter(Boolean).join(' ');
+    dayCells+=`<div class="${cls}" onclick="selectCalDay('${dk}')">
+      <span class="cal-num" style="${isToday?'font-weight:700':''}${trained&&!isToday?';color:#2e7d32':''}">${d}</span>
+      ${dotHtml}
+    </div>`;
+  }
+  let detail='';
+  if(S.calSelected){
+    const entries=dateMap[S.calSelected]||[];
+    const selDate=new Date(S.calSelected+'T12:00:00');
+    const selLabel=selDate.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
+    if(entries.length>0){
+      const grouped={};
+      entries.forEach(e=>{if(!grouped[e.exName])grouped[e.exName]={entries:[],exId:e.exId,phaseColor:e.phaseColor};grouped[e.exName].entries.push(e);});
+      const rows=Object.entries(grouped).map(([name,g])=>`<div class="day-entry-card">
+        <div style="font-size:14px;color:#1a1a1a">${name}</div>
+        ${g.entries.map((e,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span style="font-size:13px;font-family:'Courier New',monospace;color:${e.phaseColor}">${e.entry.sets}×${e.entry.reps} · ${e.entry.weight}kg</span>
+          <button class="hdel" onclick="delLog('${e.exId}',${e.idx});selectCalDay('${S.calSelected}')" style="color:#ddd;font-size:13px">✕</button>
+        </div>`).join('')}
+      </div>`).join('');
+      detail=`<div class="day-detail"><div class="day-detail-header">
+        <div><div style="font-size:11px;color:#2e7d32;font-family:'Courier New',monospace;text-transform:uppercase">Training</div><div style="font-size:16px;color:#1a1a1a">${selLabel}</div></div>
+        <button class="day-detail-close" onclick="S.calSelected=null;render()">✕</button>
+      </div>${rows}</div>`;
+    } else {
+      detail=`<div class="day-detail" style="background:#f7f6f2;border-color:#e8e6e0"><div class="day-detail-header">
+        <div style="font-size:15px;color:#1a1a1a">${selLabel}</div>
+        <button class="day-detail-close" onclick="S.calSelected=null;render()">✕</button>
+      </div><div style="font-size:13px;color:#aaa;font-style:italic">Kein Training an diesem Tag.</div></div>`;
+    }
+  }
+  let streak=0;
+  const dk0=new Date();
+  for(let i=0;i<365;i++){const d=new Date(dk0);d.setDate(d.getDate()-i);const k=d.toISOString().split('T')[0];if(dateMap[k]&&dateMap[k].length>0)streak++;else if(i>0)break;}
+  const totalDays=Object.keys(dateMap).length;
+
+  return `<div class="content">
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <div class="stat-box" style="flex:1"><div style="font-size:18px">🔥</div><div class="stat-val" style="color:#e65100">${streak}</div><div class="stat-lbl">Streak</div></div>
+    <div class="stat-box" style="flex:1"><div style="font-size:18px">📅</div><div class="stat-val" style="color:#2e7d32">${totalDays}</div><div class="stat-lbl">Trainingstage</div></div>
+    <div class="stat-box" style="flex:1"><div style="font-size:18px">💪</div><div class="stat-val" style="color:#1565c0">${Object.values(S.log).reduce((a,b)=>a+b.length,0)}</div><div class="stat-lbl">Sätze</div></div>
+  </div>
+  ${detail}
+  <div class="cal-wrap">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calPrev()">‹</button>
+      <span class="cal-month">${monthNames[m]} ${y}</span>
+      <button class="cal-nav" onclick="calNext()">›</button>
+    </div>
+    <div class="cal-grid">
+      ${dowLabels.map(d=>`<div class="cal-dow">${d}</div>`).join('')}
+      ${dayCells}
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid #f0ede8;display:flex;align-items:center;gap:16px">
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#2e7d32"></div><span style="font-size:11px;color:#888;font-family:'Courier New',monospace">Training</span></div>
+      <span style="font-size:11px;color:#bbb;font-family:'Courier New',monospace;margin-left:auto">Tippen = Details</span>
+    </div>
+  </div>
+  <div class="slabel">Alle Trainingstage</div>
+  ${Object.entries(buildDateMap()).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,20).map(([dk,entries])=>{
+    const d=new Date(dk+'T12:00:00');
+    const label=d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
+    const exNames=[...new Set(entries.map(e=>e.exName))];
+    const colors=[...new Set(entries.map(e=>e.phaseColor))];
+    return `<div style="background:#fff;border:1px solid #e8e6e0;border-left:3px solid ${colors[0]||'#ddd'};border-radius:8px;padding:11px 14px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04)" onclick="selectCalDay('${dk}')">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-family:'Courier New',monospace;color:#666">${label}</span>
+        <span style="font-size:11px;color:#bbb;font-family:'Courier New',monospace">${entries.length} Einträge</span>
+      </div>
+      <div style="font-size:13px;color:#444;margin-top:4px">${exNames.slice(0,4).join(', ')}${exNames.length>4?` +${exNames.length-4}`:''}</div>
+    </div>`;
+  }).join('')}
+  ${Object.keys(buildDateMap()).length===0?`<div style="text-align:center;padding:30px;color:#bbb;font-size:13px">Noch keine Einheiten eingetragen.</div>`:''}
+  </div>`;
+}
+
+// ─── RENDER: BODY MEASUREMENTS ────────────────────────────────────────────────
+const MEASURES=[
+  {key:'gewicht',label:'Gewicht',unit:'kg',x:50,y:7,side:'right'},
+  {key:'brust',label:'Brust',unit:'cm',x:50,y:25,side:'right'},
+  {key:'schulter',label:'Schulter',unit:'cm',x:50,y:18,side:'left'},
+  {key:'oberarm_l',label:'Oberarm L',unit:'cm',x:22,y:28,side:'left'},
+  {key:'oberarm_r',label:'Oberarm R',unit:'cm',x:78,y:28,side:'right'},
+  {key:'taille',label:'Taille',unit:'cm',x:50,y:35,side:'right'},
+  {key:'bauch',label:'Bauch',unit:'cm',x:50,y:42,side:'left'},
+  {key:'huefte',label:'Hüfte',unit:'cm',x:50,y:50,side:'right'},
+  {key:'oberschenkel_l',label:'Oberschenkel L',unit:'cm',x:35,y:60,side:'left'},
+  {key:'oberschenkel_r',label:'Oberschenkel R',unit:'cm',x:65,y:60,side:'right'},
+  {key:'wade_l',label:'Wade L',unit:'cm',x:33,y:78,side:'left'},
+  {key:'wade_r',label:'Wade R',unit:'cm',x:67,y:78,side:'right'},
+  {key:'unterarm',label:'Unterarm',unit:'cm',x:50,y:88,side:'right'},
+];
+const MCOLOR='#1565c0';
+function latestMeas(key){const arr=S.measurements[key]||[];return arr.length?arr[arr.length-1]:null;}
+
+function rBody(){
+  const figSvg=`<svg viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg" style="width:180px;height:360px;display:block;margin:0 auto">
+    <ellipse cx="50" cy="12" rx="9" ry="10" fill="#d0d8e8" stroke="#b0bcd4" stroke-width=".8"/>
+    <rect x="46" y="21" width="8" height="6" rx="2" fill="#d0d8e8" stroke="#b0bcd4" stroke-width=".8"/>
+    <path d="M30 27 Q22 30 20 50 Q19 65 26 75 Q35 80 50 80 Q65 80 74 75 Q81 65 80 50 Q78 30 70 27 Z" fill="#d0d8e8" stroke="#b0bcd4" stroke-width=".8"/>
+    <path d="M30 28 Q18 35 14 55 Q12 65 16 72" fill="none" stroke="#c0cce0" stroke-width="7" stroke-linecap="round"/>
+    <path d="M70 28 Q82 35 86 55 Q88 65 84 72" fill="none" stroke="#c0cce0" stroke-width="7" stroke-linecap="round"/>
+    <path d="M40 79 Q38 100 36 120 Q34 140 34 158" fill="none" stroke="#c0cce0" stroke-width="9" stroke-linecap="round"/>
+    <path d="M60 79 Q62 100 64 120 Q66 140 66 158" fill="none" stroke="#c0cce0" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cx="34" cy="162" rx="7" ry="4" fill="#c0cce0"/>
+    <ellipse cx="66" cy="162" rx="7" ry="4" fill="#c0cce0"/>
+  </svg>`;
+
+  const dots=MEASURES.map(m=>{
+    const latest=latestMeas(m.key);
+    const hasVal=!!latest;
+    const dotColor=hasVal?MCOLOR:'#bbb';
+    const labelSide=m.side==='left'?'right:calc(100% + 4px)':'left:calc(100% + 4px)';
+    return `<div class="mpoint" style="left:${m.x}%;top:${m.y}%" onclick="openMeasure('${m.key}')">
+      <div class="mdot" style="background:${dotColor}">${hasVal?`<span>${latest.value}</span>`:'＋'}</div>
+      <div class="mlabel" style="${labelSide};top:50%;transform:translateY(-50%);color:${hasVal?MCOLOR:'#bbb'}">${m.label}</div>
+    </div>`;
+  }).join('');
+
+  let measurePanel='';
+  if(S.activeMeasure){
+    const m=MEASURES.find(x=>x.key===S.activeMeasure);
+    const hist=S.measurements[S.activeMeasure]||[];
+    const latest=hist.length?hist[hist.length-1]:null;
+    measurePanel=`<div style="background:#e8f0fe;border:1px solid #bad3f7;border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;color:${MCOLOR};font-family:'Courier New',monospace;letter-spacing:.1em;text-transform:uppercase">${m.label}</div>
+          ${latest?`<div style="font-size:20px;font-family:'Courier New',monospace;color:#1a1a1a">${latest.value} ${m.unit} <span style="font-size:12px;color:#888">· ${fmtDate(latest.date)}</span></div>`:'<div style="font-size:13px;color:#888">Noch kein Eintrag</div>'}
+        </div>
+        <button onclick="S.activeMeasure=null;render()" style="background:none;border:none;font-size:18px;color:#888;cursor:pointer">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="meas-input" type="number" step="0.1" min="0" max="500" value="${latest?latest.value:''}" placeholder="${m.unit}"
+          style="width:100px;padding:8px 12px;border-radius:8px;border:1px solid #bad3f7;background:#fff;font-family:'Courier New',monospace;font-size:16px;color:#1a1a1a;outline:none"/>
+        <span style="font-size:14px;color:#666;font-family:'Courier New',monospace">${m.unit}</span>
+        <button onclick="saveMeasure('${m.key}')" style="padding:8px 16px;border-radius:8px;background:${MCOLOR};color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700">Speichern</button>
+      </div>
+      ${hist.length>0?`<div style="margin-top:12px">
+        <div style="font-size:9px;color:#888;font-family:'Courier New',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Verlauf</div>
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
+          ${hist.slice().reverse().slice(0,10).map((e,i)=>`<div style="flex:0 0 auto;background:#fff;border:1px solid #bad3f7;border-radius:6px;padding:6px 10px;text-align:center">
+            <div style="font-size:14px;font-family:'Courier New',monospace;color:${MCOLOR}">${e.value}</div>
+            <div style="font-size:9px;color:#aaa;margin-top:1px">${fmtDate(e.date)}</div>
+            <button onclick="delMeasure('${m.key}',${hist.length-1-i})" style="background:none;border:none;color:#ddd;font-size:11px;cursor:pointer;margin-top:2px">✕</button>
+          </div>`).join('')}
+        </div>
+      </div>`:''}
+    </div>`;
+  }
+
+  const wlog=S.weightLog.slice(-10);
+  let wChart='';
+  if(wlog.length>=2){
+    const vals=wlog.map(e=>e.value);
+    const mn=Math.min(...vals)-1, mx=Math.max(...vals)+1, rng=mx-mn||1;
+    const W=300,H=60;
+    const pts=vals.map((v,i)=>`${Math.round(i*(W/(vals.length-1))||0)},${Math.round(H-(v-mn)/rng*H)}`).join(' ');
+    const diff=parseFloat((vals[vals.length-1]-vals[0]).toFixed(1));
+    wChart=`<div style="background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:13px;color:#1a1a1a">Gewichtsverlauf</div>
+        <div style="font-size:13px;font-family:'Courier New',monospace;color:${diff<=0?'#2e7d32':'#e65100'}">${diff>0?'+':''}${diff} kg</div>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:60px;overflow:visible">
+        <polyline points="${pts}" fill="none" stroke="${MCOLOR}" stroke-width="2" stroke-linejoin="round"/>
+        ${vals.map((v,i)=>`<circle cx="${Math.round(i*(W/(vals.length-1))||0)}" cy="${Math.round(H-(v-mn)/rng*H)}" r="3" fill="${MCOLOR}"/>`).join('')}
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;font-family:'Courier New',monospace;margin-top:4px">
+        <span>${fmtDate(wlog[0].date)}</span><span>${fmtDate(wlog[wlog.length-1].date)}</span>
+      </div>
+    </div>`;
+  }
+
+  const overview=MEASURES.map(m=>{
+    const hist=S.measurements[m.key]||[];
+    if(hist.length===0)return'';
+    const latest=hist[hist.length-1];
+    const prev=hist.length>1?hist[hist.length-2]:null;
+    const diff=prev?parseFloat((latest.value-prev.value).toFixed(1)):null;
+    return `<div class="mcard" onclick="openMeasure('${m.key}')">
+      <div class="mcard-body" style="display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-size:13px;color:#1a1a1a">${m.label}</div><div style="font-size:11px;color:#aaa;margin-top:1px">${fmtDate(latest.date)}</div></div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-family:'Courier New',monospace;color:${MCOLOR}">${latest.value} <span style="font-size:12px;color:#aaa">${m.unit}</span></div>
+          ${diff!==null?`<div style="font-size:11px;font-family:'Courier New',monospace;color:${diff===0?'#aaa':diff<0?'#2e7d32':'#e65100'}">${diff>0?'+':''}${diff} ${m.unit}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  return `<div class="content">
+  <div style="font-size:11px;color:#888;font-family:'Courier New',monospace;line-height:1.7;background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+    Tippe auf einen <span style="color:${MCOLOR}">●</span> Punkt am Körper um ein Maß einzutragen.
+  </div>
+  ${measurePanel}
+  <div style="position:relative;width:180px;margin:0 auto 8px">
+    ${figSvg}
+    <div style="position:absolute;top:0;left:0;width:100%;height:100%">${dots}</div>
+  </div>
+  ${wChart}
+  ${overview?`<div class="slabel" style="margin-top:8px">Alle Maße</div>${overview}`:`<div style="text-align:center;padding:20px;font-size:13px;color:#bbb">Tippe auf einen Punkt um zu starten.</div>`}
+  </div>`;
+}
+
+// ─── RENDER: FREE TRAINING ────────────────────────────────────────────────────
+function rFree(){
+  const exercises=S.freeSession.exercises||[];
+  const byDate={};
+  exercises.forEach((ex,i)=>{const dk=ex.date?dateKey(ex.date):'heute';if(!byDate[dk])byDate[dk]=[];byDate[dk].push({...ex,_idx:i});});
+  const sortedDates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+
+  const addPanel=S.freeAdding?`<div style="background:#e8f0fe;border:1px solid #bad3f7;border-radius:10px;padding:14px;margin-bottom:14px">
+    <div style="font-size:10px;color:#1565c0;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px">Übung hinzufügen</div>
+    <input class="free-input" id="free-name" placeholder="Übungsname" value="${S.freeInput.name}" style="width:100%;margin-bottom:8px" oninput="S.freeInput.name=this.value"/>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+      <div><div style="font-size:10px;color:#888;font-family:'Courier New',monospace;margin-bottom:4px">SÄTZE</div>
+        <div class="num-ctrl"><button class="num-btn" onclick="freeDelta('sets',-1,1,8)">−</button><span class="num-val">${S.freeInput.sets}</span><button class="num-btn" onclick="freeDelta('sets',1,1,8)">+</button></div>
+      </div>
+      <div><div style="font-size:10px;color:#888;font-family:'Courier New',monospace;margin-bottom:4px">WDHL</div>
+        <div class="num-ctrl"><button class="num-btn" onclick="freeDelta('reps',-1,1,50)">−</button><span class="num-val">${S.freeInput.reps}</span><button class="num-btn" onclick="freeDelta('reps',1,1,50)">+</button></div>
+      </div>
+      <div><div style="font-size:10px;color:#888;font-family:'Courier New',monospace;margin-bottom:4px">KG</div>
+        <div class="num-ctrl"><button class="num-btn" onclick="freeDelta('weight',-${S.weightStep},0,400)">−</button><span class="num-val">${S.freeInput.weight}</span><button class="num-btn" onclick="freeDelta('weight',${S.weightStep},0,400)">+</button></div>
+        <div class="step-toggle" style="margin-top:5px">${[0.5,1,2.5,5].map(s=>`<button class="step-opt${S.weightStep===s?' active':''}" onclick="setWeightStep(${s})">${s}</button>`).join('')}</div>
+      </div>
+      <div><div style="font-size:10px;color:#888;font-family:'Courier New',monospace;margin-bottom:4px">EINHEIT</div>
+        <select class="free-input" onchange="S.freeInput.unit=this.value" style="padding:7px 8px">${['kg','sek','–'].map(u=>`<option${S.freeInput.unit===u?' selected':''}>${u}</option>`).join('')}</select>
+      </div>
+    </div>
+    <input class="free-input" id="free-note" placeholder="Notiz (optional)" style="width:100%;margin-bottom:10px"/>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveFreeEx()" style="padding:8px 16px;border-radius:8px;background:#1565c0;color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700">✓ Hinzufügen</button>
+      <button onclick="S.freeAdding=false;render()" style="padding:8px 14px;border-radius:8px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:12px">Abbrechen</button>
+    </div>
+  </div>`:'';
+
+  const exList=sortedDates.map(dk=>{
+    const d=new Date(dk+'T12:00:00');
+    const label=dk==='heute'?'Heute':d.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'});
+    const rows=byDate[dk].map(ex=>`<div class="free-ex-card">
+      <div><div style="font-size:14px;color:#1a1a1a">${ex.name}</div><div style="font-size:12px;color:#aaa;margin-top:1px">${ex.note||''}</div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="text-align:right"><div style="font-size:15px;font-family:'Courier New',monospace;color:#1565c0">${ex.sets}×${ex.reps}</div><div style="font-size:12px;color:#aaa">${ex.weight>0?ex.weight+'kg':''}</div></div>
+        <button onclick="delFreeEx(${ex._idx})" style="background:none;border:none;color:#ddd;font-size:16px;cursor:pointer;padding:4px">✕</button>
+      </div>
+    </div>`).join('');
+    return `<div style="margin-bottom:16px"><div class="slabel">${label}</div>${rows}</div>`;
+  }).join('');
+
+  return `<div class="content">
+  <button onclick="S.freeAdding=true;S.freeInput={name:'',sets:3,reps:10,weight:0,unit:'kg',note:''};render()"
+    style="width:100%;padding:13px;border-radius:10px;background:#1565c0;color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">
+    + Freie Übung eintragen
+  </button>
+  ${addPanel}
+  ${exercises.length===0&&!S.freeAdding?`<div style="text-align:center;padding:40px 16px;color:#bbb"><div style="font-size:36px;margin-bottom:10px">🏃</div><div style="font-size:13px;line-height:1.8;color:#aaa">Hier kannst du Übungen eintragen<br>die nicht im Plan stehen —<br>Laufen, Radfahren, Yoga, etc.</div></div>`:exList}
+  </div>`;
+}
+
+// ─── RENDER: HISTORY ──────────────────────────────────────────────────────────
+function rHistory(){
+  const all=[];
+  S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(ex=>{
+    (S.log[ex.id]||[]).forEach((e,i)=>all.push({...e,exName:ex.name,exId:ex.id,idx:i,pc:ph.color}));
+  })));
+  all.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const prs={};
+  all.forEach(e=>{if(!prs[e.exName]||e.weight>prs[e.exName].weight)prs[e.exName]=e;});
+
+  if(all.length===0) return `<div class="content" style="text-align:center;padding:60px 16px">
+    <div style="font-size:44px;margin-bottom:14px">📋</div>
+    <div style="font-size:13px;color:#aaa;line-height:1.8">Noch keine Einheiten eingetragen.</div>
+  </div>`;
+
+  return `<div class="content">
+  <div class="slabel">Persönliche Bestleistungen</div>
+  <div class="pr-strip">
+    ${Object.entries(prs).map(([name,e])=>`<div class="pr-card" style="border-top:3px solid ${e.pc}">
+      <div style="font-size:9px;color:${e.pc};font-family:'Courier New',monospace;letter-spacing:.1em;margin-bottom:4px">PR</div>
+      <div style="font-size:13px;color:#1a1a1a;margin-bottom:3px">${name}</div>
+      <div style="font-size:17px;font-family:'Courier New',monospace;color:#1a1a1a">${e.weight}kg</div>
+      <div style="font-size:10px;color:#aaa;margin-top:2px">${e.sets}×${e.reps}</div>
+    </div>`).join('')}
+  </div>
+  <div class="slabel">Alle Einträge</div>
+  ${all.slice(0,60).map(e=>`<div style="background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:11px 16px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div>
+      <div style="font-size:14px;color:#1a1a1a">${e.exName}</div>
+      <div style="font-size:11px;color:#aaa;font-family:'Courier New',monospace;margin-top:1px">${e.date?new Date(e.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:'Courier New',monospace;font-size:14px;color:${e.pc}">${e.sets}×${e.reps} · ${e.weight}kg</span>
+      <button onclick="delLog('${e.exId}',${e.idx})" style="background:none;border:none;color:#ddd;font-size:16px;padding:4px;cursor:pointer;line-height:1">✕</button>
+    </div>
+  </div>`).join('')}
+  </div>`;
+}
+
+// ─── RENDER: SETTINGS ─────────────────────────────────────────────────────────
+function rSettings(){
+  return `<div class="content">
+  <div style="background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div class="slabel">Plan zurücksetzen</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.6">Alle Planänderungen zurücksetzen auf Standardwerte. Protokoll und Maße bleiben erhalten.</p>
+    ${!S.showReset
+      ?`<button onclick="S.showReset=true;render()" style="padding:9px 16px;border-radius:8px;background:transparent;border:1px solid #ffcdd2;color:#e53935;font-family:'Courier New',monospace;font-size:12px">Plan zurücksetzen</button>`
+      :`<div style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:8px;padding:12px;margin-bottom:8px">
+        <div style="font-size:13px;color:#c62828;margin-bottom:10px">Plan auf Standardwerte zurücksetzen?</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="doReset()" style="padding:9px 16px;border-radius:8px;background:#e53935;border:none;color:#fff;font-family:'Courier New',monospace;font-size:12px">Ja, zurücksetzen</button>
+          <button onclick="S.showReset=false;render()" style="padding:9px 16px;border-radius:8px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:12px">Abbrechen</button>
+        </div>
+      </div>`}
+  </div>
+
+  <div style="background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div class="slabel">Daten sichern & wiederherstellen</div>
+    <p style="font-size:13px;color:#666;line-height:1.7;margin-bottom:14px">Exportiere alle Trainingsdaten, Maße und Einstellungen als Datei. Beim App-Update oder Gerätewechsel einfach wieder importieren.</p>
+    <button onclick="exportData()" style="width:100%;padding:12px;border-radius:8px;background:#1565c0;color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px">
+      <span>⬇</span> Daten exportieren (.json)
+    </button>
+    <label style="width:100%;padding:12px;border-radius:8px;background:#f7f6f2;color:#1a1a1a;border:1px solid #ddd;font-family:'Courier New',monospace;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+      <span>⬆</span> Daten importieren
+      <input type="file" accept=".json" onchange="importData(event)" style="display:none"/>
+    </label>
+    ${S.importMsg?`<div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:${S.importMsg.ok?'#f0faf0':'#fff5f5'};border:1px solid ${S.importMsg.ok?'#c8e6c8':'#ffcdd2'};font-size:13px;color:${S.importMsg.ok?'#2e7d32':'#c62828'};font-family:'Courier New',monospace">${S.importMsg.text}</div>`:''}
+  </div>
+
+  <div style="background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div class="slabel">Speicher prüfen & reparieren</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.6">Prüft ob alte Daten aus früheren App-Versionen vorhanden sind und migriert sie bei Bedarf.</p>
+    <button onclick="checkStorage()" style="padding:9px 16px;border-radius:8px;background:transparent;border:1px solid #ddd;color:#666;font-family:'Courier New',monospace;font-size:12px">🔍 Speicher prüfen</button>
+    ${S.storageMsg?`<div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:${S.storageMsg.ok?'#f0faf0':'#fff8e1'};border:1px solid ${S.storageMsg.ok?'#c8e6c8':'#ffe082'};font-size:12px;color:${S.storageMsg.ok?'#2e7d32':'#f57f17'};font-family:'Courier New',monospace;line-height:1.6">${S.storageMsg.text}</div>`:''}
+  </div>
+
+  <div style="background:#fff;border:1px solid #ffcdd2;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div class="slabel" style="color:#e53935">Alle Daten endgültig löschen</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.6">Löscht <strong>alle</strong> Trainingsdaten, Maße, Protokolle und Einstellungen unwiderruflich. Vorher Backup exportieren!</p>
+    ${!S.showFullReset
+      ?`<button onclick="S.showFullReset=true;render()" style="padding:9px 16px;border-radius:8px;background:transparent;border:1px solid #e53935;color:#e53935;font-family:'Courier New',monospace;font-size:12px">🗑 Alle Daten löschen</button>`
+      :`<div style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:8px;padding:12px">
+        <div style="font-size:13px;color:#c62828;margin-bottom:6px;font-weight:700">⚠ Wirklich alle Daten löschen?</div>
+        <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6">Dieser Vorgang kann nicht rückgängig gemacht werden. Alle Logs, Maße, Planänderungen und Backups werden gelöscht.</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="doFullReset()" style="padding:9px 16px;border-radius:8px;background:#c62828;border:none;color:#fff;font-family:'Courier New',monospace;font-size:12px">Ja, alles löschen</button>
+          <button onclick="S.showFullReset=false;render()" style="padding:9px 16px;border-radius:8px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:12px">Abbrechen</button>
+        </div>
+      </div>`}
+  </div>
+
+  <div style="margin-top:8px;font-size:11px;color:#ccc;font-family:'Courier New',monospace;text-align:center;line-height:1.6">
+    v5.0 · Offline · Kein KI-Key erforderlich
+  </div>
+  </div>`;
+}
+
+// ─── MAIN RENDER ──────────────────────────────────────────────────────────────
+function render(){
+  const ph=curPh(); const c=ph.color;
+  const titles={dashboard:'Übersicht',session:`${curSess().day} · ${curSess().name}`,history:'Verlauf',calendar:'Kalender',body:'Körpermaße',free:'Freies Training',settings:'Einstellungen'};
+  const navItems=[
+    {id:'dashboard',lbl:'Start',icon:'⊞'},
+    {id:'session',lbl:'Training',icon:'◈'},
+    {id:'calendar',lbl:'Kalender',icon:'📅'},
+    {id:'body',lbl:'Maße',icon:'📐'},
+    {id:'free',lbl:'Frei',icon:'🏃'},
+    {id:'history',lbl:'Verlauf',icon:'◷'},
+  ];
+
+  let body='';
+  if(S.view==='dashboard') body=rDash();
+  else if(S.view==='session') body=rSession();
+  else if(S.view==='calendar') body=rCalendar();
+  else if(S.view==='body') body=rBody();
+  else if(S.view==='free') body=rFree();
+  else if(S.view==='history') body=rHistory();
+  else body=rSettings();
+
+  const canGoBack=(S.view==='session')||(S.prevView&&S.prevView!==S.view&&S.view!=='dashboard');
+
+  document.getElementById('app').innerHTML=`
+    <div class="topbar">
+      ${canGoBack?`<button class="back-btn" onclick="goBack()">‹</button>`:''}
+      <div class="topbar-titles">
+        <div class="topbar-sub">Mein Krafttraining</div>
+        <div class="topbar-title">${titles[S.view]||''}</div>
+      </div>
+      <div class="topbar-right">
+        <div class="phase-dot" style="background:${c}"></div>
+        <span class="phase-label">${ph.name}</span>
+        <button onclick="setView('settings')" style="background:none;border:none;font-size:18px;color:${S.view==='settings'?c:'#bbb'};padding:2px 0 2px 8px;cursor:pointer;line-height:1">⚙</button>
+      </div>
+    </div>
+    ${body}
+    <div class="bottomnav">
+      ${navItems.map(n=>`<button class="nav-btn" onclick="setView('${n.id}')">
+        <span class="nav-icon" style="color:${S.view===n.id?c:'#ccc'}">${n.icon}</span>
+        <span class="nav-lbl" style="color:${S.view===n.id?c:'#bbb'}">${n.lbl}</span>
+      </button>`).join('')}
+    </div>`;
+}
+
+// ─── PWA ──────────────────────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  const sw=`const C='ft5';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.add('/'))));self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+
+render();
+</script>
+</body>
+</html>
