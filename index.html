@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon.png"/>
 <title>Mein Krafttraining</title>
+<script src="exercises.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#f7f6f2;color:#1a1a1a;font-family:'Georgia','Times New Roman',serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
@@ -277,57 +278,48 @@ const PHASES=[
   ]},
 ];
 
-// ─── LOKALER ÜBUNGSPOOL ───────────────────────────────────────────────────────
-// muscle: Beine|Brust|Rücken|Schulter|Arme|Core
-// alts: Array von Übungsnamen aus diesem Pool
-const POOL=[
-  // BEINE
-  {name:"Kniebeuge",eq:"LH",muscle:"Beine",sets:3,reps:5,weight:0,unit:"kg",note:"Tiefe kontrollieren",alts:["Goblet Squat","Bulg. Kniebeuge","Frontkniebeuge","Körpergewicht-Squat"]},
-  {name:"Frontkniebeuge",eq:"LH",muscle:"Beine",sets:3,reps:5,weight:0,unit:"kg",note:"Aufrechter Oberkörper",alts:["Kniebeuge","Goblet Squat","Bulg. Kniebeuge"]},
-  {name:"Goblet Squat",eq:"KH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"KH vor der Brust halten",alts:["Kniebeuge","Bulg. Kniebeuge","Körpergewicht-Squat"]},
-  {name:"Bulg. Kniebeuge",eq:"KH",muscle:"Beine",sets:3,reps:8,weight:0,unit:"kg",note:"Pro Seite, hinterer Fuß erhöht",alts:["Lunges","Goblet Squat","Körpergewicht-Squat"]},
-  {name:"Körpergewicht-Squat",eq:"–",muscle:"Beine",sets:3,reps:15,weight:0,unit:"kg",note:"Keine Zusatzlast nötig",alts:["Goblet Squat","Bulg. Kniebeuge","Lunges"]},
-  {name:"Lunges",eq:"KH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"Pro Seite, aufrechter Oberkörper",alts:["Bulg. Kniebeuge","Goblet Squat","Körpergewicht-Squat"]},
-  {name:"Romanian Deadlift",eq:"LH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"Slow eccentric 4s, Hüftscharniere",alts:["Hip Thrust","KH Romanian Deadlift","Rückenstrecker"]},
-  {name:"KH Romanian Deadlift",eq:"KH",muscle:"Beine",sets:3,reps:10,weight:0,unit:"kg",note:"Gleiche Mechanik wie LH-Variante",alts:["Romanian Deadlift","Hip Thrust","Rückenstrecker"]},
-  {name:"Hip Thrust",eq:"KH",muscle:"Beine",sets:3,reps:12,weight:0,unit:"kg",note:"Schultern auf Bank, Hüfte hoch",alts:["Romanian Deadlift","Rückenstrecker","KH Romanian Deadlift"]},
-  // HINGE / RÜCKEN KETTE
-  {name:"Kreuzheben",eq:"LH",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Stangennah, flacher Rücken",alts:["Romanian Deadlift","KH Romanian Deadlift","Rückenstrecker"]},
-  {name:"Rückenstrecker",eq:"–",muscle:"Rücken",sets:3,reps:12,weight:0,unit:"kg",note:"Kontrolliert, keine Überstreckung",alts:["Romanian Deadlift","Hip Thrust","Superman"]},
-  {name:"Superman",eq:"–",muscle:"Rücken",sets:3,reps:15,weight:0,unit:"kg",note:"Bauchlagen, Arme und Beine heben",alts:["Rückenstrecker","Romanian Deadlift"]},
-  // BRUST
-  {name:"Bankdrücken",eq:"LH",muscle:"Brust",sets:3,reps:5,weight:0,unit:"kg",note:"Schulterblätter zusammenziehen",alts:["KH Bankdrücken","Liegestütze","Schrägbankdrücken"]},
-  {name:"Schrägbankdrücken",eq:"KH",muscle:"Brust",sets:3,reps:8,weight:0,unit:"kg",note:"45° Winkel, Stretch am Tiefpunkt",alts:["Bankdrücken","KH Bankdrücken","Liegestütze"]},
-  {name:"KH Bankdrücken",eq:"KH",muscle:"Brust",sets:3,reps:10,weight:0,unit:"kg",note:"Neutrale oder Pronationsgriff",alts:["Bankdrücken","Schrägbankdrücken","Liegestütze"]},
-  {name:"KH Flyes",eq:"KH",muscle:"Brust",sets:3,reps:12,weight:0,unit:"kg",note:"Weiter Bogen, Stretch am Tiefpunkt",alts:["Liegestütze","KH Bankdrücken","Schrägbankdrücken"]},
-  {name:"Liegestütze",eq:"–",muscle:"Brust",sets:3,reps:12,weight:0,unit:"kg",note:"Körper gerade wie Brett",alts:["KH Bankdrücken","Bankdrücken","Dips"]},
-  {name:"Dips",eq:"Stange",muscle:"Brust",sets:3,reps:8,weight:0,unit:"kg",note:"Leicht vorgebeugt = Brustfokus",alts:["Liegestütze","KH Bankdrücken","Bankdrücken"]},
-  // RÜCKEN / ZUG
-  {name:"Klimmzüge (eng)",eq:"Stange",muscle:"Rücken",sets:3,reps:6,weight:0,unit:"kg",note:"Vollständige ROM, Schulterblätter",alts:["Klimmzüge (weit)","Klimmzüge (Untergriff)","Einarm Row","Latzug KH"]},
-  {name:"Klimmzüge (weit)",eq:"Stange",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Ellbogen zur Hüfte ziehen",alts:["Klimmzüge (eng)","Klimmzüge (Untergriff)","Einarm Row","Latzug KH"]},
-  {name:"Klimmzüge (Untergriff)",eq:"Stange",muscle:"Rücken",sets:3,reps:6,weight:0,unit:"kg",note:"Bizeps involvieren",alts:["Klimmzüge (eng)","Klimmzüge (weit)","Einarm Row","Latzug KH"]},
-  {name:"Klimmzüge +Gewicht",eq:"Stange",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Gürtel oder KH zwischen Beinen",alts:["Klimmzüge (eng)","Klimmzüge (weit)","Einarm Row"]},
-  {name:"Einarm Row",eq:"KH",muscle:"Rücken",sets:3,reps:10,weight:0,unit:"kg",note:"Pro Seite, voller ROM",alts:["Pendlay Row","Latzug KH","Klimmzüge (eng)"]},
-  {name:"Pendlay Row",eq:"LH",muscle:"Rücken",sets:3,reps:5,weight:0,unit:"kg",note:"Horizontaler Rücken, explosiv hoch",alts:["Einarm Row","Latzug KH","Klimmzüge (eng)"]},
-  {name:"Latzug KH",eq:"KH",muscle:"Rücken",sets:3,reps:12,weight:0,unit:"kg",note:"Auf Bank liegend, Pullover-Bewegung",alts:["Einarm Row","Klimmzüge (eng)","Pendlay Row"]},
-  {name:"Face Pulls",eq:"KH",muscle:"Schulter",sets:3,reps:15,weight:0,unit:"kg",note:"Rotator Cuff, Ellbogen hoch",alts:["Seitheben","Schulterdrücken","Arnold Press"]},
-  // SCHULTER
-  {name:"Overhead Press",eq:"LH",muscle:"Schulter",sets:3,reps:6,weight:0,unit:"kg",note:"Kern anspannen, Stange über Kopf",alts:["Schulterdrücken","Arnold Press","Seitheben"]},
-  {name:"Schulterdrücken",eq:"KH",muscle:"Schulter",sets:3,reps:10,weight:0,unit:"kg",note:"Stehend, pro Hand",alts:["Overhead Press","Arnold Press","Seitheben"]},
-  {name:"Arnold Press",eq:"KH",muscle:"Schulter",sets:3,reps:10,weight:0,unit:"kg",note:"Volle Rotation, pro Hand",alts:["Schulterdrücken","Overhead Press","Seitheben"]},
-  {name:"Seitheben",eq:"KH",muscle:"Schulter",sets:3,reps:15,weight:0,unit:"kg",note:"Leichtes Gewicht, Kontrolle",alts:["Face Pulls","Schulterdrücken","Arnold Press"]},
-  // ARME
-  {name:"Curl",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Supination oben",alts:["Hammercurl","Konzentrationscurl","Klimmzüge (Untergriff)"]},
-  {name:"Hammercurl",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Neutralgriff, Unterarm mittrainieren",alts:["Curl","Konzentrationscurl"]},
-  {name:"Konzentrationscurl",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Ellbogen auf Oberschenkel, Isolation",alts:["Curl","Hammercurl"]},
-  {name:"Trizeps Overhead",eq:"KH",muscle:"Arme",sets:3,reps:12,weight:0,unit:"kg",note:"Langer Kopf, über Kopf",alts:["Trizeps Kickback","Dips","Liegestütze"]},
-  {name:"Trizeps Kickback",eq:"KH",muscle:"Arme",sets:3,reps:15,weight:0,unit:"kg",note:"Isolation, Ellbogen am Körper",alts:["Trizeps Overhead","Dips"]},
-  // CORE
-  {name:"Plank",eq:"–",muscle:"Core",sets:3,reps:30,weight:0,unit:"sek",note:"Kern stabilisieren, gerade Linie",alts:["Hängendes Knieheben","Hanging Leg Raise","Pallof Press"]},
-  {name:"Hanging Leg Raise",eq:"Stange",muscle:"Core",sets:3,reps:10,weight:0,unit:"kg",note:"Kontrollierte Bewegung, Becken kippen",alts:["Hängendes Knieheben","Plank","Pallof Press"]},
-  {name:"Hängendes Knieheben",eq:"Stange",muscle:"Core",sets:3,reps:15,weight:0,unit:"kg",note:"Becken kippen für maximale Aktivierung",alts:["Hanging Leg Raise","Plank","Pallof Press"]},
-  {name:"Pallof Press",eq:"KH",muscle:"Core",sets:3,reps:12,weight:0,unit:"kg",note:"Pro Seite, anti-Rotation",alts:["Plank","Hanging Leg Raise"]},
+// ─── LOKALER ÜBUNGSPOOL (Fallback wenn exercises.js nicht geladen) ────────────
+const POOL_FALLBACK=[
+  {name:"Kniebeuge",eq:"LH",muscle:"Beine",secondary:["Core"],sets:3,reps:5,weight:0,unit:"kg",difficulty:2,note:"Tiefe kontrollieren",alts:["Goblet Squat","Bulg. Kniebeuge","Frontkniebeuge"]},
+  {name:"Frontkniebeuge",eq:"LH",muscle:"Beine",secondary:["Core"],sets:3,reps:5,weight:0,unit:"kg",difficulty:3,note:"Aufrechter Oberkörper",alts:["Kniebeuge","Goblet Squat"]},
+  {name:"Goblet Squat",eq:"KH",muscle:"Beine",secondary:[],sets:3,reps:10,weight:0,unit:"kg",difficulty:1,note:"KH vor der Brust",alts:["Kniebeuge","Körpergewicht-Squat"]},
+  {name:"Bulg. Kniebeuge",eq:"KH",muscle:"Beine",secondary:[],sets:3,reps:8,weight:0,unit:"kg",difficulty:2,note:"Pro Seite",alts:["Lunges","Goblet Squat"]},
+  {name:"Körpergewicht-Squat",eq:"–",muscle:"Beine",secondary:[],sets:3,reps:15,weight:0,unit:"kg",difficulty:1,note:"Keine Last",alts:["Goblet Squat","Lunges"]},
+  {name:"Lunges",eq:"KH",muscle:"Beine",secondary:[],sets:3,reps:10,weight:0,unit:"kg",difficulty:2,note:"Pro Seite",alts:["Bulg. Kniebeuge","Goblet Squat"]},
+  {name:"Romanian Deadlift",eq:"LH",muscle:"Beine",secondary:["Rücken"],sets:3,reps:10,weight:0,unit:"kg",difficulty:2,note:"Slow eccentric 4s",alts:["Hip Thrust","Rückenstrecker"]},
+  {name:"Hip Thrust",eq:"KH",muscle:"Beine",secondary:["Core"],sets:3,reps:12,weight:0,unit:"kg",difficulty:2,note:"Schultern auf Bank",alts:["Romanian Deadlift","Glute Bridge"]},
+  {name:"Kreuzheben",eq:"LH",muscle:"Rücken",secondary:["Beine","Core"],sets:3,reps:5,weight:0,unit:"kg",difficulty:3,note:"Flacher Rücken",alts:["Romanian Deadlift","Rückenstrecker"]},
+  {name:"Klimmzüge (eng)",eq:"Stange",muscle:"Rücken",secondary:["Arme"],sets:3,reps:6,weight:0,unit:"kg",difficulty:3,note:"Volle ROM",alts:["Klimmzüge (weit)","Einarm Row"]},
+  {name:"Klimmzüge (weit)",eq:"Stange",muscle:"Rücken",secondary:["Arme"],sets:3,reps:5,weight:0,unit:"kg",difficulty:3,note:"Ellbogen zur Hüfte",alts:["Klimmzüge (eng)","Einarm Row"]},
+  {name:"Klimmzüge (Untergriff)",eq:"Stange",muscle:"Rücken",secondary:["Arme"],sets:3,reps:6,weight:0,unit:"kg",difficulty:2,note:"Bizeps involvieren",alts:["Klimmzüge (eng)","Einarm Row"]},
+  {name:"Einarm Row",eq:"KH",muscle:"Rücken",secondary:["Arme"],sets:3,reps:10,weight:0,unit:"kg",difficulty:2,note:"Pro Seite",alts:["Pendlay Row","Klimmzüge (eng)"]},
+  {name:"Pendlay Row",eq:"LH",muscle:"Rücken",secondary:["Arme"],sets:3,reps:5,weight:0,unit:"kg",difficulty:3,note:"Explosiv hoch",alts:["Einarm Row","Langhantelrudern"]},
+  {name:"Rückenstrecker",eq:"–",muscle:"Rücken",secondary:[],sets:3,reps:12,weight:0,unit:"kg",difficulty:1,note:"Kontrolliert",alts:["Superman","Romanian Deadlift"]},
+  {name:"Superman",eq:"–",muscle:"Rücken",secondary:["Core"],sets:3,reps:15,weight:0,unit:"kg",difficulty:1,note:"Bauchlage",alts:["Rückenstrecker","Vogel-Hund"]},
+  {name:"Bankdrücken",eq:"LH",muscle:"Brust",secondary:["Schulter","Arme"],sets:3,reps:5,weight:0,unit:"kg",difficulty:3,note:"Schulterblätter",alts:["KH Bankdrücken","Liegestütze"]},
+  {name:"Schrägbankdrücken",eq:"KH",muscle:"Brust",secondary:["Schulter"],sets:3,reps:8,weight:0,unit:"kg",difficulty:2,note:"45° Winkel",alts:["Bankdrücken","Liegestütze"]},
+  {name:"KH Bankdrücken",eq:"KH",muscle:"Brust",secondary:["Schulter"],sets:3,reps:10,weight:0,unit:"kg",difficulty:2,note:"Voller Stretch",alts:["Bankdrücken","Liegestütze"]},
+  {name:"KH Flyes",eq:"KH",muscle:"Brust",secondary:[],sets:3,reps:12,weight:0,unit:"kg",difficulty:2,note:"Stretch am Tiefpunkt",alts:["Liegestütze","KH Bankdrücken"]},
+  {name:"Liegestütze",eq:"–",muscle:"Brust",secondary:["Schulter","Arme"],sets:3,reps:12,weight:0,unit:"kg",difficulty:1,note:"Körper gerade",alts:["KH Bankdrücken","Dips"]},
+  {name:"Dips",eq:"Stange",muscle:"Brust",secondary:["Arme"],sets:3,reps:8,weight:0,unit:"kg",difficulty:2,note:"Vorgebeugt = Brust",alts:["Liegestütze","Bankdrücken"]},
+  {name:"Overhead Press",eq:"LH",muscle:"Schulter",secondary:["Arme"],sets:3,reps:6,weight:0,unit:"kg",difficulty:3,note:"Kern anspannen",alts:["Schulterdrücken KH","Arnold Press"]},
+  {name:"Schulterdrücken KH",eq:"KH",muscle:"Schulter",secondary:["Arme"],sets:3,reps:10,weight:0,unit:"kg",difficulty:2,note:"Stehend",alts:["Overhead Press","Arnold Press"]},
+  {name:"Arnold Press",eq:"KH",muscle:"Schulter",secondary:["Arme"],sets:3,reps:10,weight:0,unit:"kg",difficulty:2,note:"Volle Rotation",alts:["Schulterdrücken KH","Seitheben"]},
+  {name:"Seitheben",eq:"KH",muscle:"Schulter",secondary:[],sets:3,reps:15,weight:0,unit:"kg",difficulty:1,note:"Leicht, Kontrolle",alts:["Face Pulls","Arnold Press"]},
+  {name:"Face Pulls",eq:"Band",muscle:"Schulter",secondary:["Rücken"],sets:3,reps:15,weight:0,unit:"kg",difficulty:1,note:"Rotator Cuff",alts:["Seitheben","Band Pull-Apart"]},
+  {name:"Curl",eq:"KH",muscle:"Arme",secondary:[],sets:3,reps:12,weight:0,unit:"kg",difficulty:1,note:"Supination oben",alts:["Hammercurl","Konzentrationscurl"]},
+  {name:"Hammercurl",eq:"KH",muscle:"Arme",secondary:[],sets:3,reps:12,weight:0,unit:"kg",difficulty:1,note:"Neutralgriff",alts:["Curl","Zottmancurl"]},
+  {name:"Konzentrationscurl",eq:"KH",muscle:"Arme",secondary:[],sets:3,reps:12,weight:0,unit:"kg",difficulty:1,note:"Isolation",alts:["Curl","Hammercurl"]},
+  {name:"Trizeps Overhead",eq:"KH",muscle:"Arme",secondary:[],sets:3,reps:12,weight:0,unit:"kg",difficulty:2,note:"Langer Kopf",alts:["Trizeps Kickback","Kabeltrizeps"]},
+  {name:"Trizeps Kickback",eq:"KH",muscle:"Arme",secondary:[],sets:3,reps:15,weight:0,unit:"kg",difficulty:1,note:"Isolation",alts:["Trizeps Overhead","Dips eng"]},
+  {name:"Plank",eq:"–",muscle:"Core",secondary:["Schulter"],sets:3,reps:40,weight:0,unit:"sek",difficulty:1,note:"Gerade Linie",alts:["Seitstütz","RKC Plank"]},
+  {name:"Hanging Leg Raise",eq:"Stange",muscle:"Core",secondary:[],sets:3,reps:10,weight:0,unit:"kg",difficulty:3,note:"Becken kippen",alts:["Hängendes Knieheben","Crunch"]},
+  {name:"Hängendes Knieheben",eq:"Stange",muscle:"Core",secondary:[],sets:3,reps:15,weight:0,unit:"kg",difficulty:2,note:"Becken kippen",alts:["Hanging Leg Raise","Knieheben liegend"]},
+  {name:"Pallof Press",eq:"Band",muscle:"Core",secondary:[],sets:3,reps:12,weight:0,unit:"kg",difficulty:2,note:"Anti-Rotation",alts:["Plank","Russischer Twist"]},
+  {name:"Russischer Twist",eq:"KH",muscle:"Core",secondary:[],sets:3,reps:20,weight:0,unit:"kg",difficulty:2,note:"Rotation langsam",alts:["Fahrrad-Crunch","Pallof Press"]},
 ];
+// Nutze externen Pool wenn vorhanden, sonst Fallback
+function getPool(){return(typeof EXERCISE_POOL!=='undefined'&&EXERCISE_POOL.length>0)?EXERCISE_POOL:POOL_FALLBACK;}
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function ls(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}}
@@ -437,6 +429,10 @@ const S={
   replaceSuggestions:[],
   freeInput:{name:'',sets:3,reps:10,weight:0,unit:'kg',note:''},
   freeAdding:false,
+  freeEquip:'studio',
+  freeGoalMuscles:[], // Array von Muskelgruppen
+  freeGoalDuration:20, // 10|20|30|45
+  generatedWorkout:null,
   calYear:new Date().getFullYear(),
   calMonth:new Date().getMonth(),
   calSelected:null,
@@ -476,68 +472,75 @@ function buildDateMap(){
   return m;
 }
 
-// ─── REGELBASIERTER COACH ─────────────────────────────────────────────────────
+// ─── REGELBASIERTER COACH (3-Log-Regel) ──────────────────────────────────────
 function getCoachTip(ex){
   const hist=S.log[ex.id]||[];
   if(hist.length===0) return {icon:'📋',text:'Kein Verlauf – starte mit dem Plangewicht und fokussiere Technik.'};
+
   const last=hist[hist.length-1];
-  const goalSets=ex.sets, goalReps=ex.reps;
-  const doneSets=last.sets, doneReps=last.reps, doneWeight=last.weight;
+  if(ex.unit==='sek'||ex.unit==='–'){
+    return {icon:'✓',text:`Letztes Mal: ${last.sets}×${last.reps}. Ziel halten oder 5 Sek erhöhen.`};
+  }
 
-  if(ex.unit==='sek'||ex.unit==='–') return {icon:'✓',text:`Letztes Mal: ${doneSets}×${doneReps}. Ziel halten oder 5 Sek erhöhen.`};
-
-  const fullSuccess=doneSets>=goalSets&&doneReps>=goalReps;
-  const close=doneSets>=goalSets&&doneReps>=Math.round(goalReps*0.85);
-  const failed=doneReps<Math.round(goalReps*0.85);
-
+  // 3-Log-Regel: letzte 3 Einträge alle Ziel erreicht, ohne Planänderung dazwischen?
   if(hist.length>=3){
     const last3=hist.slice(-3);
-    const stagnated=last3.every(e=>e.weight===doneWeight&&e.reps>=Math.round(goalReps*0.85));
-    if(stagnated&&fullSuccess) return {icon:'🔄',text:`${doneWeight}kg seit 3 Einheiten stabil. Bereit für +2,5 kg – oder Übung ersetzen für neue Reize.`};
+    const allSuccess=last3.every(e=>{
+      const gs=e.goalSets||ex.sets;
+      const gr=e.goalReps||ex.reps;
+      return e.sets>=gs&&e.reps>=gr;
+    });
+    // Planänderung: prüfen ob goalWeight sich in den letzten 3 verändert hat
+    const weights=last3.map(e=>e.goalWeight!==undefined?e.goalWeight:e.weight);
+    const noWeightChange=weights.every(w=>w===weights[0]);
+
+    if(allSuccess&&noWeightChange&&last.weight>0){
+      return {icon:'📈',text:`3× Ziel erreicht bei ${last.weight}kg. Heute +2,5 kg → ${last.weight+2.5} kg versuchen.`};
+    }
+    if(allSuccess&&noWeightChange&&last.weight===0){
+      return {icon:'📈',text:`3× Ziel erreicht. Sätze oder Wiederholungen erhöhen.`};
+    }
   }
 
-  if(fullSuccess){
-    const step=doneWeight>0?2.5:0;
-    if(step>0) return {icon:'📈',text:`Ziel erreicht (${doneSets}×${doneReps} · ${doneWeight}kg). Heute: +${step} kg → ${doneWeight+step} kg versuchen.`};
-    return {icon:'✓',text:`Ziel erreicht (${doneSets}×${doneReps}). Körpergewicht-Übung – Sätze oder Wiederholungen erhöhen.`};
-  }
-  if(close) return {icon:'➡',text:`Knapp geschafft (${doneSets}×${doneReps} · ${doneWeight}kg). Gewicht halten, gleiche Sätze/Wdhl.`};
-  if(failed){
-    const newW=doneWeight>0?parseFloat((doneWeight*0.95).toFixed(1)):0;
-    return {icon:'📉',text:`Ziel verfehlt (${doneReps}/${goalReps} Wdhl). Gewicht auf ${newW}kg reduzieren und Technik prüfen.`};
-  }
-  return {icon:'➡',text:`Letztes Mal: ${doneSets}×${doneReps} · ${doneWeight}kg. Gleiche Parameter heute.`};
+  // Einzelcheck letzter Eintrag
+  const goalS=last.goalSets||ex.sets;
+  const goalR=last.goalReps||ex.reps;
+  const fullSuccess=last.sets>=goalS&&last.reps>=goalR;
+  const close=last.sets>=goalS&&last.reps>=Math.round(goalR*0.85);
+
+  if(fullSuccess) return {icon:'➡',text:`Letztes Mal Ziel erreicht (${last.sets}×${last.reps}·${last.weight}kg). Noch ${hist.length<3?3-hist.length:0}× zum Erhöhen.`};
+  if(close) return {icon:'➡',text:`Knapp geschafft (${last.sets}×${last.reps}·${last.weight}kg). Gewicht halten.`};
+  const newW=last.weight>0?parseFloat((last.weight*0.95).toFixed(1)):0;
+  return {icon:'📉',text:`Ziel verfehlt (${last.reps}/${goalR} Wdhl). Gewicht auf ${newW}kg reduzieren, Technik prüfen.`};
 }
 
 // ─── ÜBUNG ERSETZEN (lokal) ───────────────────────────────────────────────────
 function startReplace(exId, exName, exEq){
   S.replaceMode=exId;
   S.editing=null; S.logMode=null;
+  const pool=getPool();
+  // Planübungen ausschließen
+  const planNames=new Set();
+  S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(e=>planNames.add(e.name))));
 
-  // Finde Alternativen aus dem Pool
-  const poolEntry=POOL.find(p=>p.name===exName);
+  const poolEntry=pool.find(p=>p.name===exName);
   let suggestions=[];
 
-  if(poolEntry&&poolEntry.alts.length>0){
-    // Direkte Alternativen aus dem Pool
+  if(poolEntry&&poolEntry.alts&&poolEntry.alts.length>0){
     suggestions=poolEntry.alts
-      .map(altName=>POOL.find(p=>p.name===altName))
+      .map(altName=>pool.find(p=>p.name===altName))
       .filter(Boolean)
+      .filter(p=>!planNames.has(p.name))
       .slice(0,3);
   }
-
-  // Falls keine direkten Alternativen: gleiche Muskelgruppe
   if(suggestions.length<3&&poolEntry){
-    const byMuscle=POOL.filter(p=>p.muscle===poolEntry.muscle&&p.name!==exName&&!suggestions.find(s=>s.name===p.name));
+    const byMuscle=pool.filter(p=>p.muscle===poolEntry.muscle&&p.name!==exName&&!planNames.has(p.name)&&!suggestions.find(s=>s.name===p.name));
     suggestions=[...suggestions,...byMuscle].slice(0,3);
   }
-
-  // Fallback: ähnliches Equipment
   if(suggestions.length<3){
-    const byEq=POOL.filter(p=>p.eq===exEq&&p.name!==exName&&!suggestions.find(s=>s.name===p.name));
+    const byEq=pool.filter(p=>p.eq===exEq&&p.name!==exName&&!planNames.has(p.name)&&!suggestions.find(s=>s.name===p.name));
     suggestions=[...suggestions,...byEq].slice(0,3);
   }
-
   S.replaceSuggestions=suggestions.slice(0,3);
   render();
 }
@@ -563,7 +566,26 @@ function setWeightStep(s){S.weightStep=s;render();}
 function startEdit(id,sets,reps,weight){S.editing=id;S.editVals={sets,reps,weight};S.logMode=null;render()}
 function startLog(id,sets,reps,weight){S.logMode=id;S.logEntry={sets,reps,weight};S.editing=null;render()}
 function saveEdit(id){const ex=curSess().exercises.find(e=>e.id===id);if(ex)Object.assign(ex,S.editVals);S.editing=null;persist();render()}
-function saveLog(id){if(!S.log[id])S.log[id]=[];S.log[id].push({...S.logEntry,date:new Date().toISOString()});S.logMode=null;S.justLogged=id;persist();render();setTimeout(()=>{S.justLogged=null;render()},2500)}
+function saveLog(id){
+  const ex=curSess().exercises.find(e=>e.id===id);
+  if(!S.log[id])S.log[id]=[];
+  // Ziel zum Zeitpunkt des Logs mitspeichern
+  S.log[id].push({
+    ...S.logEntry,
+    date:new Date().toISOString(),
+    goalSets:ex?ex.sets:S.logEntry.sets,
+    goalReps:ex?ex.reps:S.logEntry.reps,
+    goalWeight:ex?ex.weight:S.logEntry.weight,
+  });
+  // Plan automatisch mit eingetragenen Werten aktualisieren
+  if(ex){
+    ex.sets=S.logEntry.sets;
+    ex.reps=S.logEntry.reps;
+    ex.weight=S.logEntry.weight;
+  }
+  S.logMode=null;S.justLogged=id;persist();render();
+  setTimeout(()=>{S.justLogged=null;render()},2500);
+}
 function delLog(exId,idx){if(!S.log[exId])return;S.log[exId].splice(idx,1);persist();render()}
 function calPrev(){S.calMonth--;if(S.calMonth<0){S.calMonth=11;S.calYear--;}render()}
 function calNext(){S.calMonth++;if(S.calMonth>11){S.calMonth=0;S.calYear++;}render()}
@@ -639,7 +661,125 @@ function saveMeasure(key){
 }
 function delMeasure(key,idx){if(!S.measurements[key])return;S.measurements[key].splice(idx,1);persist();render();}
 
-// ─── FREE TRAINING ACTIONS ────────────────────────────────────────────────────
+function toggleGoalMuscle(m){
+  const i=S.freeGoalMuscles.indexOf(m);
+  if(i>=0)S.freeGoalMuscles.splice(i,1);
+  else if(S.freeGoalMuscles.length<3)S.freeGoalMuscles.push(m);
+  render();
+}
+
+function generateWorkout(){
+  const pool=getPool();
+  const allowedEq=S.freeEquip==='home'?['–']:['–','KH','LH','Stange','Maschine','Band'];
+  const planNames=new Set();
+  S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(e=>planNames.add(e.name))));
+
+  // Wie viele Übungen für die gewählte Dauer
+  const countMap={10:2,20:4,30:5,45:7};
+  const count=countMap[S.freeGoalDuration]||4;
+
+  // Muskelgruppen-Quelle: gewählt oder Lücken-Analyse
+  let targetMuscles=S.freeGoalMuscles.length>0
+    ?S.freeGoalMuscles
+    :getMuscleAnalysis().gaps.concat(getMuscleAnalysis().weak);
+
+  if(targetMuscles.length===0) targetMuscles=['Beine','Rücken','Brust','Core','Schulter','Arme'];
+
+  // Gleichmäßig über Muskelgruppen verteilen
+  const perMuscle=Math.ceil(count/targetMuscles.length);
+  const result=[];
+  const used=new Set();
+
+  targetMuscles.forEach(muscle=>{
+    if(result.length>=count)return;
+    const candidates=pool.filter(p=>
+      p.muscle===muscle&&
+      allowedEq.includes(p.eq)&&
+      !planNames.has(p.name)&&
+      !used.has(p.name)
+    ).sort(()=>Math.random()-0.5);
+    candidates.slice(0,perMuscle).forEach(ex=>{
+      if(result.length<count){result.push({...ex});used.add(ex.name);}
+    });
+  });
+
+  // Falls noch Plätze frei: Auffüllen aus Pool
+  if(result.length<count){
+    const filler=pool.filter(p=>allowedEq.includes(p.eq)&&!planNames.has(p.name)&&!used.has(p.name))
+      .sort(()=>Math.random()-0.5);
+    filler.forEach(ex=>{if(result.length<count){result.push({...ex});used.add(ex.name);}});
+  }
+
+  S.generatedWorkout=result;
+  render();
+}
+
+function addGeneratedToFree(){
+  if(!S.generatedWorkout||S.generatedWorkout.length===0)return;
+  if(!S.freeSession.exercises)S.freeSession.exercises=[];
+  const now=new Date().toISOString();
+  S.generatedWorkout.forEach(ex=>{
+    S.freeSession.exercises.push({
+      name:ex.name,sets:ex.sets,reps:ex.reps,
+      weight:ex.weight,unit:ex.unit||'kg',
+      note:ex.note,date:now
+    });
+  });
+  S.generatedWorkout=null;
+  persist();render();
+}
+
+function addSuggestedFree(idx){
+  const s=getMuscleAnalysis().suggestions[idx];
+  if(!s)return;
+  if(!S.freeSession.exercises)S.freeSession.exercises=[];
+  S.freeSession.exercises.push({name:s.name,sets:s.sets,reps:s.reps,weight:s.weight,unit:s.unit||'kg',note:s.note,date:new Date().toISOString()});
+  persist();render();
+}
+
+function getMuscleAnalysis(){
+  // Letzte 7 Tage rollierend
+  const since=new Date();since.setDate(since.getDate()-7);
+  const sinceKey=since.toISOString().split('T')[0];
+
+  // Trainierte Muskelgruppen aus Logs sammeln
+  const trained={};
+  S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(ex=>{
+    const pool=getPool();
+    const poolEntry=pool.find(p=>p.name===ex.name);
+    const muscle=poolEntry?poolEntry.muscle:'Sonstige';
+    const secondary=poolEntry?poolEntry.secondary||[]:[];
+    (S.log[ex.id]||[]).forEach(e=>{
+      if(e.date&&dateKey(e.date)>=sinceKey){
+        trained[muscle]=(trained[muscle]||0)+1;
+        secondary.forEach(m=>{trained[m]=(trained[m]||0)+0.5;});
+      }
+    });
+  })));
+
+  // Alle Muskelgruppen die im Pool vorkommen
+  const allMuscles=['Beine','Brust','Rücken','Schulter','Arme','Core'];
+  const gaps=allMuscles.filter(m=>!trained[m]||trained[m]<1);
+  const weak=allMuscles.filter(m=>trained[m]&&trained[m]<2&&!gaps.includes(m));
+
+  // Übungen vorschlagen aus Pool — NICHT aus Trainingsplan
+  const pool=getPool();
+  const planNames=new Set();
+  S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(e=>planNames.add(e.name))));
+
+  const priorityMuscles=[...gaps,...weak];
+  const suggestions=[];
+  const allowedEq=S.freeEquip==='home'?['–']:['–','KH','LH','Stange','Maschine','Band'];
+  priorityMuscles.forEach(muscle=>{
+    if(suggestions.length>=6)return;
+    const candidates=pool.filter(p=>p.muscle===muscle&&!planNames.has(p.name)&&allowedEq.includes(p.eq)&&!suggestions.find(s=>s.name===p.name));
+    // Zufällig 1-2 pro Muskelgruppe
+    const pick=candidates.sort(()=>Math.random()-0.5).slice(0,gaps.includes(muscle)?2:1);
+    suggestions.push(...pick);
+  });
+
+  return {trained,gaps,weak,suggestions:suggestions.slice(0,6)};
+}
 function freeDelta(k,d,min,max){const n=parseFloat((S.freeInput[k]+d).toFixed(2));if(n>=min&&n<=max){S.freeInput[k]=n;render();}}
 function saveFreeEx(){
   const nameEl=document.getElementById('free-name');
@@ -1082,9 +1222,81 @@ function rFree(){
   const byDate={};
   exercises.forEach((ex,i)=>{const dk=ex.date?dateKey(ex.date):'heute';if(!byDate[dk])byDate[dk]=[];byDate[dk].push({...ex,_idx:i});});
   const sortedDates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+  const analysis=getMuscleAnalysis();
+  const allMuscles=['Beine','Brust','Rücken','Schulter','Arme','Core'];
 
-  const addPanel=S.freeAdding?`<div style="background:#e8f0fe;border:1px solid #bad3f7;border-radius:10px;padding:14px;margin-bottom:14px">
-    <div style="font-size:10px;color:#1565c0;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px">Übung hinzufügen</div>
+  // ── Equipment Toggle ──
+  const equipToggle=`<div style="display:flex;gap:8px;margin-bottom:12px">
+    <button onclick="S.freeEquip='home';S.generatedWorkout=null;render()" style="flex:1;padding:10px;border-radius:10px;border:2px solid ${S.freeEquip==='home'?'#1565c0':'#e8e6e0'};background:${S.freeEquip==='home'?'#e8f0fe':'#fff'};color:${S.freeEquip==='home'?'#1565c0':'#999'};font-family:'Courier New',monospace;font-size:13px;font-weight:${S.freeEquip==='home'?'700':'400'};cursor:pointer">🏠 Zuhause</button>
+    <button onclick="S.freeEquip='studio';S.generatedWorkout=null;render()" style="flex:1;padding:10px;border-radius:10px;border:2px solid ${S.freeEquip==='studio'?'#1565c0':'#e8e6e0'};background:${S.freeEquip==='studio'?'#e8f0fe':'#fff'};color:${S.freeEquip==='studio'?'#1565c0':'#999'};font-family:'Courier New',monospace;font-size:13px;font-weight:${S.freeEquip==='studio'?'700':'400'};cursor:pointer">🏋️ Studio</button>
+  </div>`;
+
+  // ── Muskelgruppen-Bar ──
+  const muscleBar=allMuscles.map(m=>{
+    const count=analysis.trained[m]||0;
+    const isGap=analysis.gaps.includes(m);
+    const isWeak=analysis.weak.includes(m);
+    const bg=isGap?'#ffcdd2':isWeak?'#fff9c4':'#c8e6c8';
+    const tc=isGap?'#c62828':isWeak?'#f9a825':'#2e7d32';
+    return `<div style="flex:0 0 auto;background:${bg};border-radius:8px;padding:6px 10px;text-align:center;min-width:52px">
+      <div style="font-size:11px;font-family:'Courier New',monospace;color:${tc};font-weight:600">${m}</div>
+      <div style="font-size:9px;color:${tc};margin-top:1px">${count===0?'–':count<2?'wenig':'ok'}</div>
+    </div>`;
+  }).join('');
+
+  // ── Workout Generator ──
+  const muscleSelect=allMuscles.map(m=>{
+    const sel=S.freeGoalMuscles.includes(m);
+    return `<button onclick="toggleGoalMuscle('${m}')" style="padding:6px 12px;border-radius:20px;border:1.5px solid ${sel?'#1565c0':'#ddd'};background:${sel?'#e8f0fe':'#fff'};color:${sel?'#1565c0':'#888'};font-family:'Courier New',monospace;font-size:12px;cursor:pointer;font-weight:${sel?'700':'400'}">${m}</button>`;
+  }).join('');
+
+  const durationSelect=[10,20,30,45].map(d=>`<button onclick="S.freeGoalDuration=${d};render()" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid ${S.freeGoalDuration===d?'#1565c0':'#ddd'};background:${S.freeGoalDuration===d?'#e8f0fe':'#fff'};color:${S.freeGoalDuration===d?'#1565c0':'#888'};font-family:'Courier New',monospace;font-size:12px;cursor:pointer;font-weight:${S.freeGoalDuration===d?'700':'400'}">${d} Min</button>`).join('');
+
+  const generatorBlock=`<div style="background:#fff;border:1px solid #e8e6e0;border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+    <div style="font-size:10px;color:#1565c0;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px">⚡ Workout generieren</div>
+    <div style="font-size:11px;color:#aaa;font-family:'Courier New',monospace;margin-bottom:6px">FOKUS (max. 3, leer = Lücken aus Plan)</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${muscleSelect}</div>
+    <div style="font-size:11px;color:#aaa;font-family:'Courier New',monospace;margin-bottom:6px">DAUER</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">${durationSelect}</div>
+    <button onclick="generateWorkout()" style="width:100%;padding:11px;border-radius:8px;background:#1565c0;color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700;cursor:pointer">
+      ▶ Workout erstellen
+    </button>
+  </div>`;
+
+  // ── Generierter Workout ──
+  let generatedBlock='';
+  if(S.generatedWorkout&&S.generatedWorkout.length>0){
+    const countMap={10:2,20:4,30:5,45:7};
+    const totalMin=S.freeGoalDuration;
+    const rows=S.generatedWorkout.map(ex=>`<div style="background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:14px;color:#1a1a1a">${ex.name}</div>
+        <div style="font-size:11px;color:#aaa;margin-top:2px">${ex.muscle} · ${ex.eq} · ${ex.note}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:10px">
+        <div style="font-size:13px;font-family:'Courier New',monospace;color:#1565c0;font-weight:700">${ex.sets}×${ex.reps}</div>
+        ${ex.weight>0?`<div style="font-size:11px;color:#aaa">${ex.weight}kg</div>`:''}
+      </div>
+    </div>`).join('');
+    generatedBlock=`<div style="background:#e8f0fe;border:1px solid #bad3f7;border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:10px;color:#1565c0;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase">Generierter Workout</div>
+          <div style="font-size:12px;color:#444;margin-top:2px">${S.generatedWorkout.length} Übungen · ~${totalMin} Min · ${S.freeEquip==='home'?'🏠 Zuhause':'🏋️ Studio'}</div>
+        </div>
+        <button onclick="S.generatedWorkout=null;render()" style="background:none;border:none;font-size:18px;color:#aaa;cursor:pointer">✕</button>
+      </div>
+      ${rows}
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button onclick="addGeneratedToFree()" style="flex:1;padding:10px;border-radius:8px;background:#1565c0;color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700;cursor:pointer">✓ Zum Training hinzufügen</button>
+        <button onclick="generateWorkout()" style="padding:10px 14px;border-radius:8px;background:#fff;border:1px solid #bad3f7;color:#1565c0;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">↺ Neu</button>
+      </div>
+    </div>`;
+  }
+
+  // ── Manuell hinzufügen ──
+  const addPanel=S.freeAdding?`<div style="background:#f7f6f2;border:1px solid #e8e6e0;border-radius:10px;padding:14px;margin-bottom:14px">
+    <div style="font-size:10px;color:#888;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px">Übung manuell eintragen</div>
     <input class="free-input" id="free-name" placeholder="Übungsname" value="${S.freeInput.name}" style="width:100%;margin-bottom:8px" oninput="S.freeInput.name=this.value"/>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
       <div><div style="font-size:10px;color:#888;font-family:'Courier New',monospace;margin-bottom:4px">SÄTZE</div>
@@ -1122,12 +1334,20 @@ function rFree(){
   }).join('');
 
   return `<div class="content">
-  <button onclick="S.freeAdding=true;S.freeInput={name:'',sets:3,reps:10,weight:0,unit:'kg',note:''};render()"
-    style="width:100%;padding:13px;border-radius:10px;background:#1565c0;color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">
-    + Freie Übung eintragen
+  ${equipToggle}
+  <div style="margin-bottom:14px">
+    <div class="slabel">Muskelgruppen · letzte 7 Tage</div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">${muscleBar}</div>
+    <div style="font-size:10px;color:#bbb;font-family:'Courier New',monospace;margin-top:5px">🟢 ok · 🟡 wenig · 🔴 nicht trainiert</div>
+  </div>
+  ${generatorBlock}
+  ${generatedBlock}
+  <button onclick="S.freeAdding=!S.freeAdding;S.freeInput={name:'',sets:3,reps:10,weight:0,unit:'kg',note:''};render()"
+    style="width:100%;padding:12px;border-radius:10px;background:${S.freeAdding?'#f7f6f2':'#fff'};color:#1a1a1a;border:1px solid #ddd;font-family:'Courier New',monospace;font-size:13px;margin-bottom:12px;cursor:pointer">
+    ${S.freeAdding?'✕ Abbrechen':'+ Manuell eintragen'}
   </button>
   ${addPanel}
-  ${exercises.length===0&&!S.freeAdding?`<div style="text-align:center;padding:40px 16px;color:#bbb"><div style="font-size:36px;margin-bottom:10px">🏃</div><div style="font-size:13px;line-height:1.8;color:#aaa">Hier kannst du Übungen eintragen<br>die nicht im Plan stehen —<br>Laufen, Radfahren, Yoga, etc.</div></div>`:exList}
+  ${exList||(!S.freeAdding&&!S.generatedWorkout?`<div style="text-align:center;padding:30px 16px;color:#bbb"><div style="font-size:32px;margin-bottom:8px">🏃</div><div style="font-size:13px;line-height:1.8;color:#aaa">Workout generieren oder<br>Übung manuell eintragen.</div></div>`:'')}
   </div>`;
 }
 
