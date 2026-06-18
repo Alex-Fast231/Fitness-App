@@ -437,6 +437,7 @@ const S={
   calMonth:new Date().getMonth(),
   calSelected:null,
   storageMsg:null,
+  diagMsg:null,
 };
 
 function persist(){
@@ -1391,6 +1392,48 @@ function rHistory(){
 }
 
 // ─── RENDER: SETTINGS ─────────────────────────────────────────────────────────
+function diagStorage(){
+  const allKeys=Object.keys(localStorage);
+  const known=['training_app_data','fp3_log','fp3_plan','fp3_meas','fp3_wlog','fp3_free','fp3_chat','fp3_key','fp3_gkey','fp3_groqkey','fp3_orkey','fp3_prov','fp2_log','fp2_plan','fp2_meas','fp2_wlog','fp_log','fp_plan','fitapp_log','fitapp_plan'];
+  const found=allKeys.filter(k=>known.includes(k)||k.startsWith('fp'));
+  const unknown=allKeys.filter(k=>!known.includes(k)&&!k.startsWith('fp'));
+
+  let msg='<b>Gefundene Keys:</b><br>';
+  if(allKeys.length===0){msg+='Keine localStorage-Daten gefunden.';
+  } else {
+    found.forEach(k=>{
+      try{
+        const v=localStorage.getItem(k);
+        const parsed=JSON.parse(v);
+        let info='';
+        if(k==='training_app_data'){
+          const logCount=Object.values(parsed.log||{}).reduce((a,b)=>a+b.length,0);
+          info=`→ ${logCount} Logs, Plan: ${parsed.plan?'✓':'–'}`;
+        } else if(k.includes('log')){
+          const parsed2=typeof parsed==='object'?parsed:{};
+          const count=Array.isArray(parsed2)?parsed2.length:Object.values(parsed2).reduce((a,b)=>a+(Array.isArray(b)?b.length:0),0);
+          info=`→ ${count} Einträge`;
+        } else {
+          info=`→ ${v?v.length:0} Zeichen`;
+        }
+        msg+=`<span style="color:#1565c0">${k}</span> ${info}<br>`;
+      } catch(e){msg+=`${k} (kein JSON)<br>`;}
+    });
+    if(unknown.length>0) msg+=`<br><b>Andere Keys:</b> ${unknown.join(', ')}`;
+    if(found.length===0) msg+='Keine bekannten Training-Keys gefunden.';
+  }
+  S.diagMsg=msg;
+  render();
+}
+
+function forceReMigrate(){
+  // Lösche Migrations-Flag und lade neu
+  const d=ls('training_app_data',{});
+  delete d._migrated;
+  lss('training_app_data',d);
+  location.reload();
+}
+
 function rSettings(){
   return `<div class="content">
   <div style="background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
@@ -1426,6 +1469,15 @@ function rSettings(){
     <button onclick="checkStorage()" style="padding:9px 16px;border-radius:8px;background:transparent;border:1px solid #ddd;color:#666;font-family:'Courier New',monospace;font-size:12px">🔍 Speicher prüfen</button>
     ${S.storageMsg?`<div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:${S.storageMsg.ok?'#f0faf0':'#fff8e1'};border:1px solid ${S.storageMsg.ok?'#c8e6c8':'#ffe082'};font-size:12px;color:${S.storageMsg.ok?'#2e7d32':'#f57f17'};font-family:'Courier New',monospace;line-height:1.6">${S.storageMsg.text}</div>`:''}
   </div>
+
+  <div style="background:#fff3e0;border:1px solid #ffe082;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div class="slabel" style="color:#e65100">🔎 Diagnose & Daten-Reparatur</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.6">Falls Logs fehlen: prüft alle gespeicherten Daten und zeigt genau wo sie liegen. Mit "Erneut migrieren" werden alte Daten wiederhergestellt.</p>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button onclick="diagStorage()" style="padding:9px 14px;border-radius:8px;background:#fff;border:1px solid #ffe082;color:#e65100;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">🔎 Speicher anzeigen</button>
+      <button onclick="forceReMigrate()" style="padding:9px 14px;border-radius:8px;background:#e65100;border:none;color:#fff;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">↺ Erneut migrieren</button>
+    </div>
+    ${S.diagMsg?`<div style="background:#fff;border:1px solid #ffe082;border-radius:8px;padding:12px;font-size:12px;font-family:'Courier New',monospace;line-height:1.9;color:#333">${S.diagMsg}</div>`:''}
 
   <div style="background:#fff;border:1px solid #ffcdd2;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
     <div class="slabel" style="color:#e53935">Alle Daten endgültig löschen</div>
