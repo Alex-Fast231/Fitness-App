@@ -438,6 +438,7 @@ const S={
   calSelected:null,
   storageMsg:null,
   diagMsg:null,
+  showBackupReminder:false,
 };
 
 function persist(){
@@ -473,9 +474,17 @@ function buildDateMap(){
   return m;
 }
 
+// ─── HISTORY NACH ÜBUNGSNAME GEFILTERT ───────────────────────────────────────
+// Logs ohne exName (alte Einträge vor diesem Update) werden immer mit angezeigt,
+// damit keine bestehenden Daten "verschwinden".
+function getHistForEx(ex){
+  const all=S.log[ex.id]||[];
+  return all.filter(e=>!e.exName||e.exName===ex.name);
+}
+
 // ─── REGELBASIERTER COACH (3-Log-Regel) ──────────────────────────────────────
 function getCoachTip(ex){
-  const hist=S.log[ex.id]||[];
+  const hist=getHistForEx(ex);
   if(hist.length===0) return {icon:'📋',text:'Kein Verlauf – starte mit dem Plangewicht und fokussiere Technik.'};
 
   const last=hist[hist.length-1];
@@ -551,12 +560,23 @@ function applyReplace(exId, suggIdx){
   if(!s)return;
   const ex=curSess().exercises.find(e=>e.id===exId);
   if(!ex)return;
-  const oldName=ex.name;
+  // Originalzustand merken (nur beim ERSTEN Ersetzen, nicht überschreiben bei mehrfachem Wechsel)
+  if(!ex.original){
+    ex.original={name:ex.name,eq:ex.eq,sets:ex.sets,reps:ex.reps,weight:ex.weight,unit:ex.unit,note:ex.note};
+  }
   ex.name=s.name; ex.eq=s.eq;
   ex.sets=s.sets; ex.reps=s.reps;
   ex.weight=s.weight; ex.unit=s.unit||'kg';
-  ex.note=s.note+' (ersetzt: '+oldName+')';
+  ex.note=s.note;
   S.replaceMode=null; S.replaceSuggestions=[];
+  persist(); render();
+}
+
+function revertToOriginal(exId){
+  const ex=curSess().exercises.find(e=>e.id===exId);
+  if(!ex||!ex.original)return;
+  Object.assign(ex,ex.original);
+  delete ex.original;
   persist(); render();
 }
 
@@ -570,10 +590,11 @@ function saveEdit(id){const ex=curSess().exercises.find(e=>e.id===id);if(ex)Obje
 function saveLog(id){
   const ex=curSess().exercises.find(e=>e.id===id);
   if(!S.log[id])S.log[id]=[];
-  // Ziel zum Zeitpunkt des Logs mitspeichern
+  // Ziel zum Zeitpunkt des Logs mitspeichern + Name für getrennte Historie
   S.log[id].push({
     ...S.logEntry,
     date:new Date().toISOString(),
+    exName:ex?ex.name:null,
     goalSets:ex?ex.sets:S.logEntry.sets,
     goalReps:ex?ex.reps:S.logEntry.reps,
     goalWeight:ex?ex.weight:S.logEntry.weight,
@@ -584,7 +605,13 @@ function saveLog(id){
     ex.reps=S.logEntry.reps;
     ex.weight=S.logEntry.weight;
   }
-  S.logMode=null;S.justLogged=id;persist();render();
+  S.logMode=null;S.justLogged=id;
+
+  // Backup-Erinnerung alle 5 Logs
+  const totalLogs=Object.values(S.log).reduce((a,b)=>a+b.length,0);
+  if(totalLogs>0&&totalLogs%5===0) S.showBackupReminder=true;
+
+  persist();render();
   setTimeout(()=>{S.justLogged=null;render()},2500);
 }
 function delLog(exId,idx){if(!S.log[exId])return;S.log[exId].splice(idx,1);persist();render()}
@@ -853,12 +880,13 @@ function rDash(){
 function rSession(){
   const ph=curPh(); const sess=curSess(); const c=ph.color;
   const exHtml=sess.exercises.map(ex=>{
-    const hist=S.log[ex.id]||[];
+    const hist=getHistForEx(ex);
     const last=hist[hist.length-1];
     const isEdit=S.editing===ex.id;
     const isLog=S.logMode===ex.id;
     const justLogged=S.justLogged===ex.id;
     const isReplace=S.replaceMode===ex.id;
+    const wasReplaced=!!ex.original;
     const tip=getCoachTip(ex);
 
     let statsHtml='';
@@ -934,7 +962,8 @@ function rSession(){
     if(!isEdit&&!isLog&&!isReplace) btns=`
       <button class="btn btn-log" onclick="startLog('${ex.id}',${ex.sets},${ex.reps},${ex.weight})">+ Eintragen</button>
       <button class="btn btn-edit" onclick="startEdit('${ex.id}',${ex.sets},${ex.reps},${ex.weight})">✎ Anpassen</button>
-      <button class="btn" style="background:#fff8e1;border:1px solid #ffe082 !important;color:#f57f17" onclick="startReplace('${ex.id}','${ex.name}','${ex.eq}')">⚡ Ersetzen</button>`;
+      <button class="btn" style="background:#fff8e1;border:1px solid #ffe082 !important;color:#f57f17" onclick="startReplace('${ex.id}','${ex.name}','${ex.eq}')">⚡ Ersetzen</button>
+      ${wasReplaced?`<button class="btn" style="background:#e8f0fe;border:1px solid #bad3f7 !important;color:#1565c0" onclick="revertToOriginal('${ex.id}')">↺ Zurück zu ${ex.original.name}</button>`:''}`;
     else if(isEdit) btns=`
       <button class="btn" style="background:${c};color:#fff;border-color:${c};font-weight:700" onclick="saveEdit('${ex.id}')">✓ Speichern</button>
       <button class="btn btn-cancel" onclick="S.editing=null;render()">Abbrechen</button>`;
@@ -944,10 +973,12 @@ function rSession(){
 
     const histStrip=hist.length>0?`<div class="hist-strip">
       <span style="font-size:9px;color:#bbb;font-family:'Courier New',monospace;white-space:nowrap">VERLAUF</span>
-      ${hist.map((e,i)=>`<span class="hist-chip">
+      ${hist.map((e)=>{
+        const realIdx=(S.log[ex.id]||[]).indexOf(e);
+        return `<span class="hist-chip">
         <span>${e.sets}×${e.reps}·${e.weight}kg${e.date?' · '+fmtDate(e.date):''}</span>
-        <button class="hdel" onclick="delLog('${ex.id}',${i})">✕</button>
-      </span>`).join('')}
+        <button class="hdel" onclick="delLog('${ex.id}',${realIdx})">✕</button>
+      </span>`;}).join('')}
     </div>`:'';
 
     return `<div class="excard">
@@ -1522,9 +1553,22 @@ function render(){
   else if(S.view==='history') body=rHistory();
   else body=rSettings();
 
+  const backupReminder=S.showBackupReminder?`<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this){S.showBackupReminder=false;render();}">
+    <div style="background:#fff;border-radius:14px;padding:22px;max-width:340px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.2)">
+      <div style="font-size:30px;margin-bottom:10px">💾</div>
+      <div style="font-size:16px;color:#1a1a1a;margin-bottom:8px">Zeit für ein Backup</div>
+      <div style="font-size:13px;color:#888;line-height:1.6;margin-bottom:16px">Du hast wieder 5 Einheiten eingetragen. Sichere deine Daten als Datei, damit nichts verloren geht.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="exportData();S.showBackupReminder=false;render()" style="flex:1;padding:11px;border-radius:8px;background:#1565c0;color:#fff;border:none;font-family:'Courier New',monospace;font-size:13px;font-weight:700;cursor:pointer">⬇ Jetzt exportieren</button>
+        <button onclick="S.showBackupReminder=false;render()" style="padding:11px 14px;border-radius:8px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">Später</button>
+      </div>
+    </div>
+  </div>`:'';
+
   const canGoBack=(S.view==='session')||(S.prevView&&S.prevView!==S.view&&S.view!=='dashboard');
 
   document.getElementById('app').innerHTML=`
+    ${backupReminder}
     <div class="topbar">
       ${canGoBack?`<button class="back-btn" onclick="goBack()">‹</button>`:''}
       <div class="topbar-titles">
