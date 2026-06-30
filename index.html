@@ -428,6 +428,8 @@ const S={
   replaceMode:null,
   replaceSuggestions:[],
   replaceBackOption:null,
+  replaceLib:false,      // Bibliothek-Modus an/aus
+  replaceLibFilter:'',   // Muskelgruppen-Filter in der Bibliothek
   freeInput:{name:'',sets:3,reps:10,weight:0,unit:'kg',note:''},
   freeAdding:false,
   freeEquip:'studio',
@@ -612,7 +614,15 @@ function applyReplaceWith(exId,s,isGoingBack){
   // Notiz mit Rückverweis versehen, außer wir wechseln gerade zurück zum Original
   ex.note=isGoingBack?(s.note||'').replace(/\s*\(ersetzt:[^)]*\)/,''):s.note;
   S.replaceMode=null; S.replaceSuggestions=[]; S.replaceBackOption=null;
+  S.replaceLib=false; S.replaceLibFilter='';
   persist(); render();
+}
+
+function applyLibExercise(exId, poolName){
+  const pool=getPool();
+  const s=pool.find(p=>p.name===poolName);
+  if(!s)return;
+  applyReplaceWith(exId,s,false);
 }
 
 function revertToOriginal(exId){
@@ -985,30 +995,63 @@ function rSession(){
     let replaceHtml='';
     if(isReplace){
       const backOpt=S.replaceBackOption;
+      const allMuscles=['Beine','Brust','Rücken','Schulter','Arme','Core','Ausdauer','Mobilität'];
+      const pool=getPool();
+      const planNames=new Set();
+      S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(e=>planNames.add(e.name))));
+      const libFilter=S.replaceLibFilter;
+      const libItems=pool
+        .filter(p=>p.name!==ex.name&&(!libFilter||p.muscle===libFilter))
+        .sort((a,b)=>a.muscle.localeCompare(b.muscle)||a.name.localeCompare(b.name));
+
+      const suggTab=!S.replaceLib;
       replaceHtml=`<div class="replace-panel">
-        <div style="font-size:10px;color:#f57f17;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px">⚡ ALTERNATIVE WÄHLEN</div>
-        ${backOpt?`<div class="suggest-card" onclick="applyBackOption('${ex.id}')" style="border:1.5px solid #1565c0;background:#e8f0fe">
-          <div>
-            <div style="font-size:14px;color:#1565c0">↺ ${backOpt.name}</div>
-            <div style="font-size:11px;color:#1565c0;margin-top:2px;opacity:.75">Vorherige Übung an dieser Stelle</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <button onclick="S.replaceLib=false;render()" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid ${!S.replaceLib?'#f57f17':'#ddd'};background:${!S.replaceLib?'#fff8e1':'#fff'};color:${!S.replaceLib?'#f57f17':'#aaa'};font-family:'Courier New',monospace;font-size:12px;font-weight:${!S.replaceLib?'700':'400'};cursor:pointer">⚡ Vorschläge</button>
+          <button onclick="S.replaceLib=true;render()" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid ${S.replaceLib?'#1565c0':'#ddd'};background:${S.replaceLib?'#e8f0fe':'#fff'};color:${S.replaceLib?'#1565c0':'#aaa'};font-family:'Courier New',monospace;font-size:12px;font-weight:${S.replaceLib?'700':'400'};cursor:pointer">📚 Bibliothek</button>
+        </div>
+        ${suggTab?`
+          ${backOpt?`<div class="suggest-card" onclick="applyBackOption('${ex.id}')" style="border:1.5px solid #1565c0;background:#e8f0fe;margin-bottom:8px">
+            <div>
+              <div style="font-size:14px;color:#1565c0">↺ ${backOpt.name}</div>
+              <div style="font-size:11px;color:#1565c0;margin-top:2px;opacity:.75">Vorherige Übung</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:10px">
+              <div style="font-size:12px;font-family:'Courier New',monospace;color:#1565c0">${backOpt.sets}×${backOpt.reps}</div>
+              <div style="font-size:11px;color:#1565c0;opacity:.6">${backOpt.eq}</div>
+            </div>
+          </div>`:''}
+          ${S.replaceSuggestions.length===0?`<div style="font-size:13px;color:#888;padding:4px 0">Keine Vorschläge — nutze die Bibliothek.</div>`:''}
+          ${S.replaceSuggestions.map((s,i)=>`<div class="suggest-card" onclick="applyReplace('${ex.id}',${i})">
+            <div>
+              <div style="font-size:14px;color:#1a1a1a">${s.name}</div>
+              <div style="font-size:11px;color:#888;margin-top:2px">${s.note}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:10px">
+              <div style="font-size:12px;font-family:'Courier New',monospace;color:#1565c0">${s.sets}×${s.reps}</div>
+              <div style="font-size:11px;color:#aaa">${s.eq}</div>
+            </div>
+          </div>`).join('')}
+        `:`
+          <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;flex-wrap:nowrap;margin-bottom:8px">
+            <button onclick="S.replaceLibFilter='';render()" style="flex:0 0 auto;padding:5px 10px;border-radius:14px;border:1px solid ${!libFilter?'#1565c0':'#ddd'};background:${!libFilter?'#e8f0fe':'#fff'};color:${!libFilter?'#1565c0':'#888'};font-family:'Courier New',monospace;font-size:11px;cursor:pointer">Alle</button>
+            ${allMuscles.map(m=>`<button onclick="S.replaceLibFilter='${m}';render()" style="flex:0 0 auto;padding:5px 10px;border-radius:14px;border:1px solid ${libFilter===m?'#1565c0':'#ddd'};background:${libFilter===m?'#e8f0fe':'#fff'};color:${libFilter===m?'#1565c0':'#888'};font-family:'Courier New',monospace;font-size:11px;cursor:pointer">${m}</button>`).join('')}
           </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:10px">
-            <div style="font-size:12px;font-family:'Courier New',monospace;color:#1565c0">${backOpt.sets}×${backOpt.reps}</div>
-            <div style="font-size:11px;color:#1565c0;opacity:.6">${backOpt.eq}</div>
+          <div style="max-height:280px;overflow-y:auto">
+            ${libItems.length===0?`<div style="font-size:13px;color:#888;padding:8px">Keine Übungen gefunden.</div>`:''}
+            ${libItems.map(p=>`<div class="suggest-card" onclick="applyLibExercise('${ex.id}','${p.name.replace(/'/g,"\\'")}')">
+              <div>
+                <div style="font-size:14px;color:#1a1a1a">${p.name}</div>
+                <div style="font-size:11px;color:#aaa;margin-top:1px">${p.muscle} · ${p.eq}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;margin-left:10px">
+                <div style="font-size:12px;font-family:'Courier New',monospace;color:#555">${p.sets}×${p.reps}</div>
+                <div style="font-size:10px;color:#ccc">${p.difficulty===1?'●○○':p.difficulty===2?'●●○':'●●●'}</div>
+              </div>
+            </div>`).join('')}
           </div>
-        </div>`:''}
-        ${S.replaceSuggestions.length===0?`<div style="font-size:13px;color:#888;padding:4px 0">Keine weiteren Alternativen im Pool gefunden.</div>`:''}
-        ${S.replaceSuggestions.map((s,i)=>`<div class="suggest-card" onclick="applyReplace('${ex.id}',${i})">
-          <div>
-            <div style="font-size:14px;color:#1a1a1a">${s.name}</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">${s.note}</div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:10px">
-            <div style="font-size:12px;font-family:'Courier New',monospace;color:#1565c0">${s.sets}×${s.reps}</div>
-            <div style="font-size:11px;color:#aaa">${s.eq}</div>
-          </div>
-        </div>`).join('')}
-        <button onclick="S.replaceMode=null;S.replaceSuggestions=[];S.replaceBackOption=null;render()" style="margin-top:4px;padding:6px 12px;border-radius:6px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:11px;cursor:pointer">Abbrechen</button>
+        `}
+        <button onclick="S.replaceMode=null;S.replaceSuggestions=[];S.replaceBackOption=null;S.replaceLib=false;S.replaceLibFilter='';render()" style="margin-top:8px;padding:6px 12px;border-radius:6px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:11px;cursor:pointer">Abbrechen</button>
       </div>`;
     }
 
