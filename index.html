@@ -427,6 +427,7 @@ const S={
   importMsg:null,
   replaceMode:null,
   replaceSuggestions:[],
+  replaceBackOption:null,
   freeInput:{name:'',sets:3,reps:10,weight:0,unit:'kg',note:''},
   freeAdding:false,
   freeEquip:'studio',
@@ -525,10 +526,19 @@ function getCoachTip(ex){
 }
 
 // ─── ÜBUNG ERSETZEN (lokal) ───────────────────────────────────────────────────
+// Liest den Namen der vorherigen Übung aus der Notiz, falls dort "(ersetzt: XYZ)" steht.
+// Das ist ein Fallback für Ersetzungen die vor Einführung von ex.original gemacht wurden.
+function parseReplacedFrom(note){
+  if(!note)return null;
+  const m=note.match(/\(ersetzt:\s*([^)]+)\)/);
+  return m?m[1].trim():null;
+}
+
 function startReplace(exId, exName, exEq){
   S.replaceMode=exId;
   S.editing=null; S.logMode=null;
   const pool=getPool();
+  const ex=curSess().exercises.find(e=>e.id===exId);
   // Planübungen ausschließen
   const planNames=new Set();
   S.plan.forEach(ph=>ph.sessions.forEach(s=>s.exercises.forEach(e=>planNames.add(e.name))));
@@ -552,23 +562,56 @@ function startReplace(exId, exName, exEq){
     suggestions=[...suggestions,...byEq].slice(0,3);
   }
   S.replaceSuggestions=suggestions.slice(0,3);
+
+  // Rück-Option ermitteln: entweder ex.original (neue Methode) oder aus Notiz geparst (Fallback für alte Daten)
+  S.replaceBackOption=null;
+  if(ex){
+    if(ex.original){
+      S.replaceBackOption={name:ex.original.name,eq:ex.original.eq,sets:ex.original.sets,reps:ex.original.reps,weight:ex.original.weight,unit:ex.original.unit,note:ex.original.note,_isOriginal:true};
+    } else {
+      const prevName=parseReplacedFrom(ex.note);
+      if(prevName){
+        const prevPoolEntry=pool.find(p=>p.name===prevName);
+        if(prevPoolEntry){
+          S.replaceBackOption={...prevPoolEntry,_isOriginal:true};
+        } else {
+          // Auch wenn nicht im Pool: trotzdem anbieten mit sinnvollen Defaults
+          S.replaceBackOption={name:prevName,eq:exEq,sets:3,reps:8,weight:0,unit:'kg',note:'Zurückgewechselt',_isOriginal:true};
+        }
+      }
+    }
+  }
   render();
 }
 
 function applyReplace(exId, suggIdx){
   const s=S.replaceSuggestions[suggIdx];
   if(!s)return;
+  applyReplaceWith(exId,s);
+}
+
+function applyBackOption(exId){
+  const s=S.replaceBackOption;
+  if(!s)return;
+  applyReplaceWith(exId,s,true);
+}
+
+function applyReplaceWith(exId,s,isGoingBack){
   const ex=curSess().exercises.find(e=>e.id===exId);
   if(!ex)return;
   // Originalzustand merken (nur beim ERSTEN Ersetzen, nicht überschreiben bei mehrfachem Wechsel)
-  if(!ex.original){
+  // Beim Zurückwechseln zur Original-Übung wird original gelöscht statt neu gesetzt.
+  if(isGoingBack){
+    delete ex.original;
+  } else if(!ex.original){
     ex.original={name:ex.name,eq:ex.eq,sets:ex.sets,reps:ex.reps,weight:ex.weight,unit:ex.unit,note:ex.note};
   }
   ex.name=s.name; ex.eq=s.eq;
   ex.sets=s.sets; ex.reps=s.reps;
   ex.weight=s.weight; ex.unit=s.unit||'kg';
-  ex.note=s.note;
-  S.replaceMode=null; S.replaceSuggestions=[];
+  // Notiz mit Rückverweis versehen, außer wir wechseln gerade zurück zum Original
+  ex.note=isGoingBack?(s.note||'').replace(/\s*\(ersetzt:[^)]*\)/,''):s.note;
+  S.replaceMode=null; S.replaceSuggestions=[]; S.replaceBackOption=null;
   persist(); render();
 }
 
@@ -941,9 +984,20 @@ function rSession(){
 
     let replaceHtml='';
     if(isReplace){
+      const backOpt=S.replaceBackOption;
       replaceHtml=`<div class="replace-panel">
         <div style="font-size:10px;color:#f57f17;font-family:'Courier New',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px">⚡ ALTERNATIVE WÄHLEN</div>
-        ${S.replaceSuggestions.length===0?`<div style="font-size:13px;color:#888;padding:4px 0">Keine Alternativen im Pool gefunden.</div>`:''}
+        ${backOpt?`<div class="suggest-card" onclick="applyBackOption('${ex.id}')" style="border:1.5px solid #1565c0;background:#e8f0fe">
+          <div>
+            <div style="font-size:14px;color:#1565c0">↺ ${backOpt.name}</div>
+            <div style="font-size:11px;color:#1565c0;margin-top:2px;opacity:.75">Vorherige Übung an dieser Stelle</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:10px">
+            <div style="font-size:12px;font-family:'Courier New',monospace;color:#1565c0">${backOpt.sets}×${backOpt.reps}</div>
+            <div style="font-size:11px;color:#1565c0;opacity:.6">${backOpt.eq}</div>
+          </div>
+        </div>`:''}
+        ${S.replaceSuggestions.length===0?`<div style="font-size:13px;color:#888;padding:4px 0">Keine weiteren Alternativen im Pool gefunden.</div>`:''}
         ${S.replaceSuggestions.map((s,i)=>`<div class="suggest-card" onclick="applyReplace('${ex.id}',${i})">
           <div>
             <div style="font-size:14px;color:#1a1a1a">${s.name}</div>
@@ -954,7 +1008,7 @@ function rSession(){
             <div style="font-size:11px;color:#aaa">${s.eq}</div>
           </div>
         </div>`).join('')}
-        <button onclick="S.replaceMode=null;S.replaceSuggestions=[];render()" style="margin-top:4px;padding:6px 12px;border-radius:6px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:11px;cursor:pointer">Abbrechen</button>
+        <button onclick="S.replaceMode=null;S.replaceSuggestions=[];S.replaceBackOption=null;render()" style="margin-top:4px;padding:6px 12px;border-radius:6px;background:transparent;border:1px solid #ddd;color:#aaa;font-family:'Courier New',monospace;font-size:11px;cursor:pointer">Abbrechen</button>
       </div>`;
     }
 
@@ -962,8 +1016,7 @@ function rSession(){
     if(!isEdit&&!isLog&&!isReplace) btns=`
       <button class="btn btn-log" onclick="startLog('${ex.id}',${ex.sets},${ex.reps},${ex.weight})">+ Eintragen</button>
       <button class="btn btn-edit" onclick="startEdit('${ex.id}',${ex.sets},${ex.reps},${ex.weight})">✎ Anpassen</button>
-      <button class="btn" style="background:#fff8e1;border:1px solid #ffe082 !important;color:#f57f17" onclick="startReplace('${ex.id}','${ex.name}','${ex.eq}')">⚡ Ersetzen</button>
-      ${wasReplaced?`<button class="btn" style="background:#e8f0fe;border:1px solid #bad3f7 !important;color:#1565c0" onclick="revertToOriginal('${ex.id}')">↺ Zurück zu ${ex.original.name}</button>`:''}`;
+      <button class="btn" style="background:#fff8e1;border:1px solid #ffe082 !important;color:#f57f17" onclick="startReplace('${ex.id}','${ex.name}','${ex.eq}')">⚡ Ersetzen</button>`;
     else if(isEdit) btns=`
       <button class="btn" style="background:${c};color:#fff;border-color:${c};font-weight:700" onclick="saveEdit('${ex.id}')">✓ Speichern</button>
       <button class="btn btn-cancel" onclick="S.editing=null;render()">Abbrechen</button>`;
